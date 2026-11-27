@@ -1127,6 +1127,77 @@ function setSkin(i) {
   m.belly.color.set(sk.belly); m.spike.color.setHex(sk.spike); m.claw.color.setHex(sk.claw); m.eye.color.setHex(sk.eye); m.eye.emissive.setHex(sk.eye);
   for (const k in m) m[k].needsUpdate = true;
   dino.skin = i;
+  setModelSkin(i);
+}
+
+
+/* ------------------------------------------------------------ rigged glTF dinosaur (Quaternius, public domain) */
+const MODEL_PAL = [
+  { body: 0x5b8a2e, dark: 0x22341a, belly: 0xd8c08a, eye: 0xffb020 },
+  { body: 0x9a5426, dark: 0x2c170a, belly: 0xe2b27c, eye: 0xffc030 },
+  { body: 0xd6d6ce, dark: 0x5e605c, belly: 0xf4efe2, eye: 0x58c8ff }
+];
+const VILLAIN_PAL = { body: 0x3b302a, dark: 0x0d0b0a, belly: 0x7c2216, eye: 0xff2a10 };
+function loadGLTF(url) { return new Promise((res, rej) => new THREE.GLTFLoader().load(url, res, undefined, rej)); }
+const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
+function attachModel(rig, gltf, pal, opts = {}) {
+  const m = gltf.scene, mats = {
+    body: new THREE.MeshStandardMaterial({ color: lin(pal.body), roughness: 0.62, metalness: 0 }),
+    dark: new THREE.MeshStandardMaterial({ color: lin(pal.dark), roughness: 0.55, metalness: 0 }),
+    belly: new THREE.MeshStandardMaterial({ color: lin(pal.belly), roughness: 0.7, metalness: 0 }),
+    eye: new THREE.MeshStandardMaterial({ color: lin(pal.eye), emissive: lin(pal.eye), emissiveIntensity: opts.trex ? 1.2 : 0.35, roughness: 0.15 })
+  };
+  for (const k in mats) mats[k].envMapIntensity = 0.35;
+  const map = { Brown: 'body', Black: 'dark', LightBrown: 'belly', Eyes: 'eye' };
+  m.traverse((o) => { if (o.isMesh) { o.material = mats[map[o.material.name] || 'body']; o.castShadow = true; o.frustumCulled = false; } });
+  m.rotation.y = PI;
+  m.scale.setScalar(opts.scale || 0.4);
+  rig.body.visible = false;
+  rig.root.add(m);
+  rig.model = m; rig.mmats = mats;
+  rig.mixer = new THREE.AnimationMixer(m);
+  rig.actions = {};
+  for (const clip of gltf.animations) rig.actions[clip.name.replace(/^.*_/, '')] = rig.mixer.clipAction(clip);
+  for (const k of ['Jump', 'Death', 'Attack']) if (rig.actions[k]) { rig.actions[k].setLoop(THREE.LoopOnce, 1); rig.actions[k].clampWhenFinished = true; }
+  rig.bones = { head: m.getObjectByName('Head'), neck: m.getObjectByName('Neck'), armL: m.getObjectByName('FrontUpLeg.L'), armR: m.getObjectByName('FrontUpLeg.R'), torso: m.getObjectByName('Torso') };
+  rig.anim = null;
+  playAnim(rig, 'Idle');
+}
+function playAnim(rig, name, fade = 0.2) {
+  if (!rig.actions || rig.anim === name || !rig.actions[name]) return;
+  const next = rig.actions[name];
+  next.reset().setEffectiveWeight(1).play();
+  if (rig.anim && rig.actions[rig.anim]) rig.actions[rig.anim].crossFadeTo(next, fade, false);
+  rig.anim = name;
+}
+function trexShape(rig) {
+  // reshape the raptor into a T-Rex after each animation step: huge head, thick neck, tiny arms
+  const b = rig.bones;
+  if (b.head) b.head.scale.setScalar(2.0);
+  if (b.neck) b.neck.scale.set(1.25, 0.85, 1.25);
+  if (b.torso) b.torso.scale.set(1.2, 1, 1.15);
+  if (b.armL) b.armL.scale.setScalar(0.3);
+  if (b.armR) b.armR.scale.setScalar(0.3);
+}
+function setModelSkin(i) {
+  if (!dino || !dino.mmats) return;
+  const p = MODEL_PAL[i], m = dino.mmats;
+  m.body.color.copy(lin(p.body)); m.dark.color.copy(lin(p.dark)); m.belly.color.copy(lin(p.belly)); m.eye.color.copy(lin(p.eye)); m.eye.emissive.copy(lin(p.eye));
+}
+async function loadModels() {
+  try {
+    const [a, b] = await Promise.all([loadGLTF('models/velociraptor.gltf'), loadGLTF('models/velociraptor.gltf')]);
+    attachModel(dino, a, MODEL_PAL[profile.skin], { scale: 0.4 });
+    attachModel(villain, b, VILLAIN_PAL, { trex: true, scale: 0.5 });
+  } catch (e) { console.warn('Rigged model unavailable, using built-in dinos', e); }
+}
+let roarT = 4;
+function animateModel(rig, dt, want, ts) {
+  if (want === 'Jump' && rig.anim !== 'Jump') { playAnim(rig, 'Jump', 0.1); }
+  else if (want !== 'Jump') playAnim(rig, want, want === 'Death' ? 0.15 : 0.25);
+  const a = rig.actions[rig.anim]; if (a) a.timeScale = ts;
+  rig.mixer.update(dt);
+  if (rig.trex) trexShape(rig);
 }
 
 /* poses: plain objects of joint angles so we can blend smoothly */
@@ -1703,7 +1774,7 @@ function addChase(v) { chase = Math.min(1, chase + v); chasePeak = Math.max(chas
 function updateVillain(dt) {
   const v = villain;
   const inGame = state === 'playing' || state === 'dying' || state === 'paused';
-  if (debugV && state === 'menu') { v.group.visible = true; dino.group.visible = false; v.group.position.set(0, 0, 0); v.phase += dt * 6; blendPose(v.cur, poseRun(v.phase, t, true), 0.3); applyPose(v, v.cur); v.root.rotation.y = PI / 2; return; }
+  if (debugV && state === 'menu') { v.group.visible = true; dino.group.visible = false; v.group.position.set(0, 0, 0); v.phase += dt * 6; if (v.mixer) animateModel(v, dt, 'Run', 1); else { blendPose(v.cur, poseRun(v.phase, t, true), 0.3); applyPose(v, v.cur); } v.root.rotation.y = PI / 2; return; }
   if (!inGame) { v.group.visible = false; return; }
   const camZ = camera.position.z;
   let z;
@@ -1716,8 +1787,9 @@ function updateVillain(dt) {
   v.group.position.x = damp(v.group.position.x, tx, 3.5, dt); v.group.position.z = z;
   if (state !== 'paused') v.phase += dt * Math.max(speed, 7) * 0.48;
   const tgt = caught ? poseChomp(t) : poseRun(v.phase, t, true);
-  if (state !== 'paused') blendPose(v.cur, tgt, 1 - Math.exp(-10 * dt));
-  applyPose(v, v.cur);
+  if (v.mixer && caught && v.anim === 'Attack' && v.actions.Attack.time >= v.actions.Attack.getClip().duration - 0.01) v.actions.Attack.reset().play();
+  if (v.mixer) animateModel(v, state === 'paused' ? 0 : dt, caught ? 'Attack' : 'Run', caught ? 1.4 : clamp(speed / 16, 0.7, 1.5));
+  else { if (state !== 'paused') blendPose(v.cur, tgt, 1 - Math.exp(-10 * dt)); applyPose(v, v.cur); }
   v.root.rotation.y = damp(v.root.rotation.y, v.side * (caught ? 0.55 : 0.22), 4, dt);
   if (v.group.visible && state === 'playing') {
     const step = Math.floor(v.phase / PI);
@@ -1755,6 +1827,8 @@ function startRun() {
   run = newRunStats(); runActive = true; run.zones.add(curZone);
   chase = 0.62; chasePeak = 0; caught = false; deathBy = 'crash';
   villain.group.position.set(px + 2, 0, camera.position.z + 4); villain.cur = poseRun(0, 0, true);
+  if (dino.mixer) { dino.anim = null; dino.mixer.stopAllAction(); playAnim(dino, 'Run', 0); }
+  if (villain.mixer) { villain.anim = null; villain.mixer.stopAllAction(); playAnim(villain, 'Run', 0); }
   setTimeout(() => sfx('trexroar'), 450);
   saveProfile();
   updateHud(true);
@@ -1967,8 +2041,19 @@ function animateDino(dt) {
   } else if ((state === 'dying' || state === 'over') && deathBy === 'crash') tgt = poseDead();
   else if (state === 'dying' || state === 'over') tgt = poseDead();
   else tgt = poseIdle(t, false);
-  if (state !== 'paused') blendPose(dino.cur, tgt, 1 - Math.exp(-(air || slideT > 0 ? 16 : 12) * dt));
-  applyPose(dino, dino.cur);
+  if (dino.mixer) {
+    let want = 'Idle', ts = 1;
+    if (state === 'playing' || state === 'paused') { want = air ? 'Jump' : 'Run'; ts = air ? 1.55 : clamp(speed / 14, 0.75, 1.7); }
+    else if (state === 'dying' || state === 'over') want = 'Death';
+    else { roarT -= dt; if (roarT <= 0 && dino.anim === 'Idle') { roarT = R(5, 8); playAnim(dino, 'Attack', 0.2); } if (dino.anim === 'Attack' && dino.actions.Attack.time >= dino.actions.Attack.getClip().duration - 0.01) playAnim(dino, 'Idle', 0.3); want = dino.anim === 'Attack' ? 'Attack' : 'Idle'; }
+    animateModel(dino, state === 'paused' ? 0 : dt, want, ts);
+    const sl = slideT > 0 && !air && state === 'playing';
+    dino.model.scale.y = damp(dino.model.scale.y, 0.4 * (sl ? 0.55 : 1), 18, dt);
+    dino.model.rotation.x = damp(dino.model.rotation.x, sl ? 0.12 : 0, 14, dt);
+  } else {
+    if (state !== 'paused') blendPose(dino.cur, tgt, 1 - Math.exp(-(air || slideT > 0 ? 16 : 12) * dt));
+    applyPose(dino, dino.cur);
+  }
   const inGame = state === 'playing' || state === 'paused' || state === 'dying' || state === 'over';
   dino.group.position.set(inGame ? px : 0, inGame ? py : 0, 0);
   const lean = inGame ? (LANES[lane] - px) : 0;
@@ -1982,6 +2067,7 @@ function animateDino(dt) {
   dino.magRing.visible = powers.magnet > 0 && inGame; dino.magRing.rotation.z = t * 3; dino.magRing.scale.setScalar(1 + Math.sin(t * 8) * 0.08);
   const boostGlow = powers.boost > 0 && inGame ? 0.5 + Math.sin(t * 20) * 0.15 : 0;
   dino.mats.skin.emissive.setRGB(boostGlow * 0.05, boostGlow * 0.25, boostGlow * 0.6);
+  if (dino.mmats) dino.mmats.body.emissive.setRGB(boostGlow * 0.04, boostGlow * 0.2, boostGlow * 0.5);
 }
 const camTarget = new THREE.Vector3(), camLook = new THREE.Vector3(), lookCur = new THREE.Vector3(0, 1.2, 0);
 function updateCamera(dt) {
@@ -2208,7 +2294,7 @@ async function boot() {
     buildMaterials(); progress(0.22, 'Growing the jungle'); await nextFrame();
     MAT.glowTorch = MAT.glowSprite(0xff9a40); MAT.glowFire = MAT.glowSprite(0xff7a20);
     buildGeometries(); buildSky(); progress(0.3, 'Hatching Diano'); await nextFrame();
-    buildDino(); buildObstacleTemplates(); buildPowerups(); buildSpeedLines();
+    buildDino(); progress(0.33, 'Waking the raptors'); await loadModels(); buildObstacleTemplates(); buildPowerups(); buildSpeedLines();
     particles = [fx = new Particles(500, true), dust = new Particles(260, false)];
     coinMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.4, 0.4, 0.09, 30).rotateX(PI / 2), [MAT.coinEdge, MAT.coinFace, MAT.coinFace], COIN_MAX);
     coinMesh.castShadow = true; coinMesh.frustumCulled = false; scene.add(coinMesh);
