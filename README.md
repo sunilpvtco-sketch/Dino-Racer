@@ -44,3 +44,8 @@ See `DEPLOY-GITHUB-PAGES.md`.
 
 ## Important
 The current character is a detailed static GLB. For the final AAA-style animation pass, rig the character and export the recommended animation clips listed in `ASSET-GUIDE.md`.
+
+## Download the Android app (APK)
+Download page: `download/index.html` (published at `/download/` on GitHub Pages).
+The APK is `download/DianoRacer.apk`, package `com.dianoracer.game`.
+SHA-256: `ef7e46d9579b42a1971f141698d813a5694fec0bdf24609c78808468729180f5`

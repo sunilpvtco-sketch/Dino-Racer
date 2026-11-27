@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diano Racer · Download the Android APK</title>
+<meta name="description" content="Download Diano Racer for Android. Run, dodge and collect through the jungle. Jungle never ends.">
+<meta name="theme-color" content="#0b1a0f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07130b;
+    --panel: #0b1a0f;
+    --panel-2: #10251a;
+    --line: rgba(255, 200, 90, 0.18);
+    --green: #3fbf4a;
+    --green-dark: #1f7a2c;
+    --gold: #ffb628;
+    --orange: #ff7a1a;
+    --red: #e8413a;
+    --cream: #f5ecd2;
+    --muted: #b9c7b0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(63,191,74,0.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 40%, rgba(255,122,26,0.12), transparent 60%),
+      var(--bg);
+    color: var(--cream);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+
+  /* Top bar */
+  header.top {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(8px);
+    background: rgba(7,19,11,0.82);
+    border-bottom: 1px solid var(--line);
+  }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+  .brand { font-family: "Lilita One", "Nunito", sans-serif; font-size: 22px; letter-spacing: 0.5px; text-decoration: none; }
+  .brand .d { color: var(--gold); }
+  .brand .r { color: var(--green); }
+  nav.links { display: flex; gap: 22px; font-weight: 700; font-size: 15px; }
+  nav.links a { text-decoration: none; color: var(--muted); }
+  nav.links a:hover { color: var(--cream); }
+  @media (max-width: 720px) { nav.links a.hide-sm { display: none; } }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: "Lilita One", "Nunito", sans-serif; font-size: 20px; letter-spacing: 0.5px;
+    padding: 14px 28px; border-radius: 14px; text-decoration: none; cursor: pointer; border: 0;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary {
+    color: #fff;
+    background: linear-gradient(#58d863, var(--green-dark));
+    box-shadow: 0 6px 0 #14501d, 0 14px 30px rgba(63,191,74,0.35);
+    text-shadow: 0 2px 0 rgba(0,0,0,0.35);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 0 #14501d, 0 18px 36px rgba(63,191,74,0.45); }
+  .btn-ghost {
+    color: var(--cream); background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+    font-size: 17px; font-family: "Nunito", sans-serif; font-weight: 800; letter-spacing: 0;
+  }
+  .btn-sm { font-size: 14px; padding: 9px 16px; border-radius: 10px; font-family: "Nunito", sans-serif; font-weight: 800; letter-spacing: 0; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; padding: 72px 0 56px; }
+  @media (max-width: 880px) { .hero { grid-template-columns: 1fr; padding: 44px 0 36px; text-align: center; } }
+  .eyebrow {
+    display: inline-block; font-weight: 800; font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold); border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px; background: rgba(255,182,40,0.06);
+  }
+  h1.title {
+    font-family: "Lilita One", "Nunito", sans-serif; font-weight: 400;
+    font-size: clamp(56px, 9vw, 104px); line-height: 0.9; margin: 18px 0 10px; letter-spacing: 1px;
+    text-shadow: 0 6px 0 rgba(0,0,0,0.35);
+  }
+  h1.title .d { color: var(--gold); display: block; }
+  h1.title .r { color: var(--green); display: block; }
+  .tagline { font-family: "Lilita One", sans-serif; font-size: 22px; color: var(--cream); letter-spacing: 2px; opacity: .9; }
+  .tagline span { color: var(--orange); }
+  .lead { font-size: 18px; color: var(--muted); margin: 18px 0 28px; max-width: 540px; }
+  @media (max-width: 880px) { .lead { margin-left: auto; margin-right: auto; } }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  @media (max-width: 880px) { .cta-row { justify-content: center; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  @media (max-width: 880px) { .chips { justify-content: center; } }
+  .chip { font-size: 13px; font-weight: 700; color: var(--muted); background: var(--panel); border: 1px solid var(--line); padding: 6px 12px; border-radius: 8px; }
+  .chip b { color: var(--cream); }
+
+  /* Phone mock */
+  .phone-wrap { display: flex; justify-content: center; }
+  .phone {
+    width: min(300px, 80vw); aspect-ratio: 9 / 19.5; border-radius: 34px; padding: 10px;
+    background: linear-gradient(160deg, #2b2b2b, #0b0b0b);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    transform: rotate(-3deg);
+  }
+  .screen {
+    width: 100%; height: 100%; border-radius: 26px; overflow: hidden; position: relative;
+    background:
+      linear-gradient(180deg, rgba(7,19,11,0) 40%, rgba(7,19,11,0.9) 100%),
+      linear-gradient(180deg, #5fb8e8 0%, #9fdc9a 45%, #2d7a3a 46%, #5a3a1e 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 28px 18px 30px;
+  }
+  .screen .sun { position: absolute; top: 46px; right: 34px; width: 46px; height: 46px; border-radius: 50%; background: #ffe27a; box-shadow: 0 0 40px #ffd34d; }
+  .screen .mini-title { font-family: "Lilita One", sans-serif; font-size: 40px; line-height: .9; text-align: center; margin-bottom: 8px; text-shadow: 0 4px 0 rgba(0,0,0,.4); }
+  .screen .mini-title .d { color: var(--gold); display: block; }
+  .screen .mini-title .r { color: var(--green); display: block; }
+  .screen .dino { font-size: 120px; line-height: 1; filter: drop-shadow(0 10px 12px rgba(0,0,0,.45)); margin-bottom: 6px; }
+  .screen .hud { position: absolute; top: 18px; left: 16px; right: 16px; display: flex; justify-content: space-between; font-family: "Lilita One", sans-serif; font-size: 16px; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.5); }
+  .screen .hud .coin { color: var(--gold); }
+  .screen .pill { width: 100%; text-align: center; font-family: "Lilita One", sans-serif; font-size: 18px; padding: 10px; border-radius: 12px; background: linear-gradient(#58d863, var(--green-dark)); color: #fff; box-shadow: 0 4px 0 #14501d; margin-top: 10px; }
+  .screen .tag { font-family: "Lilita One", sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--cream); opacity: .85; margin-top: 8px; }
+
+  /* Sections */
+  section { padding: 64px 0; border-top: 1px solid var(--line); }
+  .section-head { text-align: center; margin-bottom: 36px; }
+  .section-head h2 { font-family: "Lilita One", sans-serif; font-weight: 400; font-size: clamp(32px, 4.5vw, 46px); letter-spacing: .5px; }
+  .section-head h2 .o { color: var(--orange); }
+  .section-head p { color: var(--muted); margin-top: 6px; }
+
+  /* Features */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 580px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line); border-radius: 18px; padding: 24px;
+  }
+  .card .ico { font-size: 34px; margin-bottom: 10px; }
+  .card h3 { font-family: "Lilita One", sans-serif; font-weight: 400; font-size: 22px; color: var(--gold); letter-spacing: .3px; margin-bottom: 6px; }
+  .card p { color: var(--muted); font-size: 15.5px; }
+
+  /* Power-ups */
+  .powers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .powers { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 520px) { .powers { grid-template-columns: repeat(2, 1fr); } }
+  .power { text-align: center; padding: 18px 10px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+  .power .pi { font-size: 36px; }
+  .power .pn { font-family: "Lilita One", sans-serif; font-size: 17px; margin-top: 6px; letter-spacing: .3px; }
+  .power .pd { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
+  .p-coin .pn { color: var(--gold); } .p-mag .pn { color: #ff5a5a; } .p-spd .pn { color: #5cc8ff; }
+  .p-shd .pn { color: #6ee36e; } .p-egg .pn { color: #ffd45a; }
+
+  /* How to play */
+  .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .controls { grid-template-columns: 1fr; } }
+  .ctl { display: flex; gap: 16px; align-items: flex-start; padding: 20px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+  .ctl .arrow { flex: 0 0 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-size: 26px; background: rgba(63,191,74,0.12); border: 1px solid rgba(63,191,74,0.35); }
+  .ctl h4 { font-family: "Lilita One", sans-serif; font-weight: 400; font-size: 19px; color: var(--cream); }
+  .ctl p { color: var(--muted); font-size: 15px; }
+
+  /* Install */
+  .install { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; }
+  @media (max-width: 880px) { .install { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 28px; }
+  .panel h3 { font-family: "Lilita One", sans-serif; font-weight: 400; font-size: 26px; color: var(--gold); margin-bottom: 12px; }
+  ol.steps { list-style: none; counter-reset: s; display: grid; gap: 14px; }
+  ol.steps li { counter-increment: s; display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; color: var(--muted); }
+  ol.steps li::before {
+    content: counter(s); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    font-family: "Lilita One", sans-serif; font-size: 18px; color: #fff; background: linear-gradient(#58d863, var(--green-dark));
+  }
+  ol.steps li b { color: var(--cream); }
+  .note { margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: rgba(255,122,26,0.08); border: 1px solid rgba(255,122,26,0.35); color: #ffd3b0; font-size: 14.5px; }
+
+  .meta-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .meta-table td { padding: 11px 0; border-bottom: 1px dashed var(--line); vertical-align: top; }
+  .meta-table td:first-child { color: var(--muted); width: 40%; }
+  .meta-table td:last-child { font-weight: 700; word-break: break-all; }
+  .sha { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--gold); font-weight: 400 !important; }
+  .verify { margin-top: 18px; }
+  .verify code { display: block; background: #050d08; border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; color: var(--cream); overflow-x: auto; margin-top: 8px; }
+
+  /* Final CTA */
+  .final { text-align: center; padding: 70px 0 60px; }
+  .final h2 { font-family: "Lilita One", sans-serif; font-weight: 400; font-size: clamp(36px, 6vw, 64px); line-height: 1; }
+  .final h2 .r { color: var(--green); } .final h2 .o { color: var(--orange); }
+  .final p { color: var(--muted); margin: 14px 0 26px; }
+
+  footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+
+  .platform-banner { display: none; background: rgba(255,182,40,0.1); border-bottom: 1px solid var(--line); color: var(--gold); font-size: 14.5px; text-align: center; padding: 10px 16px; }
+  .platform-banner.show { display: block; }
+  .copied { color: var(--green) !important; }
+</style>
+</head>
+<body>
+
+<div class="platform-banner" id="platformBanner">You're on a non-Android device. Open this page on your Android phone to install Diano Racer.</div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="d">DIANO</span> <span class="r">RACER</span></a>
+    <nav class="links">
+      <a class="hide-sm" href="../">Play in browser</a>
+      <a class="hide-sm" href="#features">Features</a>
+      <a class="hide-sm" href="#how">How to play</a>
+      <a href="#install">Install</a>
+      <a class="btn btn-primary btn-sm" href="DianoRacer.apk" download>Download APK</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <span class="eyebrow">Android · APK download</span>
+      <h1 class="title"><span class="d">DIANO</span><span class="r">RACER</span></h1>
+      <div class="tagline">RUN · SURVIVE · <span>EXPLORE</span></div>
+      <p class="lead">Sprint through the jungle as Diano. Swipe to jump, slide and change lanes, grab coins and power-ups, and outrun the villain T-Rex. The jungle never ends.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="DianoRacer.apk" download>
+          <span>⬇</span> Download APK
+        </a>
+        <a class="btn btn-ghost" href="#install">How to install</a>
+      </div>
+      <div class="chips">
+        <span class="chip"><b>Platform:</b> Android</span>
+        <span class="chip"><b>Size:</b> 5.7 MB</span>
+        <span class="chip"><b>Package:</b> com.dianoracer.game</span>
+      </div>
+    </div>
+
+    <div class="phone-wrap" aria-hidden="true">
+      <div class="phone">
+        <div class="screen">
+          <div class="sun"></div>
+          <div class="hud"><span class="coin">● 248</span><span>1,320 m</span></div>
+          <div class="mini-title"><span class="d">DIANO</span><span class="r">RACER</span></div>
+          <div class="dino">🦖</div>
+          <div class="pill">PLAY</div>
+          <div class="tag">JUNGLE NEVER ENDS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Built for <span class="o">long runs</span></h2>
+        <p>Everything you need for one more run.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🏃</div>
+          <h3>Endless runner</h3>
+          <p>Jump over logs, spikes and bones. Slide under gates and branches. Change lane to dodge rocks and walls.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🪙</div>
+          <h3>Coins &amp; score</h3>
+          <p>Collect coins to raise your score. Track your distance as you run and beat your high score, saved on your device.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🗺️</div>
+          <h3>Five journeys</h3>
+          <p>Run through the Jungle Path, Waterfall, Ancient Ruins, Cave Section and Night Mode.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🦖</div>
+          <h3>Choose your dino</h3>
+          <p>Pick your dino on the character select screen and tune your Speed, Jump and Shield stats.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🛡️</div>
+          <h3>Power-ups</h3>
+          <p>Grab a Magnet, Speed Boost, Shield, Extra Life or rare Special Egg to keep running longer.</p>
+        </div>
+        <div class="card">
+          <div class="ico">⚙️</div>
+          <h3>Your settings</h3>
+          <p>Turn music, sound FX and vibration on or off, and pick a graphics setting that suits your phone.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Power-ups &amp; <span class="o">pickups</span></h2>
+        <p>Small boosts, big adventures.</p>
+      </div>
+      <div class="powers">
+        <div class="power p-coin"><div class="pi">🪙</div><div class="pn">Coin</div><div class="pd">Adds to your score</div></div>
+        <div class="power p-mag"><div class="pi">🧲</div><div class="pn">Magnet</div><div class="pd">Pulls nearby coins in</div></div>
+        <div class="power p-spd"><div class="pi">⚡</div><div class="pn">Speed Boost</div><div class="pd">Run faster for a while</div></div>
+        <div class="power p-shd"><div class="pi">🛡️</div><div class="pn">Shield</div><div class="pd">Protects you for a time</div></div>
+        <div class="power p-egg"><div class="pi">🥚</div><div class="pn">Special Egg</div><div class="pd">Rare, big score bonus</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>How to <span class="o">play</span></h2>
+        <p>Swipe on the screen to control Diano.</p>
+      </div>
+      <div class="controls">
+        <div class="ctl">
+          <div class="arrow">⬆️</div>
+          <div><h4>Swipe up</h4><p>Jump over logs, spikes and bones.</p></div>
+        </div>
+        <div class="ctl">
+          <div class="arrow">⬇️</div>
+          <div><h4>Swipe down</h4><p>Slide under gates and branches.</p></div>
+        </div>
+        <div class="ctl">
+          <div class="arrow">↔️</div>
+          <div><h4>Swipe left / right</h4><p>Change lane to dodge rocks and walls.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Install on <span class="o">Android</span></h2>
+        <p>Diano Racer is downloaded directly as an APK file, not from Google Play.</p>
+      </div>
+      <div class="install">
+        <div class="panel">
+          <h3>Installation steps</h3>
+          <ol class="steps">
+            <li><div><b>Download the APK.</b> Tap the Download APK button on this page on your Android phone.</div></li>
+            <li><div><b>Open the file.</b> Tap the notification, or open DianoRacer.apk from your Downloads folder.</div></li>
+            <li><div><b>Allow installs if asked.</b> If Android blocks it, allow your browser or file app under “Install unknown apps” in your phone's settings, then go back and try again.</div></li>
+            <li><div><b>Install and open.</b> Tap Install, then Open. Play!</div></li>
+          </ol>
+          <div class="note">The APK is not from Google Play. Only install files you trust, and check the checksum below if you want to confirm the file is intact.</div>
+        </div>
+
+        <div class="panel">
+          <h3>File details</h3>
+          <table class="meta-table">
+            <tr><td>App name</td><td>Diano Racer</td></tr>
+            <tr><td>Package</td><td>com.dianoracer.game</td></tr>
+            <tr><td>File</td><td>DianoRacer.apk</td></tr>
+            <tr><td>Size</td><td>5.7 MB (6,020,617 bytes)</td></tr>
+            <tr><td>Permissions</td><td>Internet access</td></tr>
+            <tr><td>SHA-256</td><td class="sha">ef7e46d9579b42a1971f141698d813a5694fec0bdf24609c78808468729180f5</td></tr>
+          </table>
+          <div class="verify">
+            <div style="color:var(--muted);font-size:14.5px;">To check the download on a computer, run:</div>
+            <code>sha256sum DianoRacer.apk</code>
+          </div>
+          <div class="cta-row" style="margin-top:20px;">
+            <a class="btn btn-primary btn-sm" href="DianoRacer.apk" download>⬇ Download APK</a>
+            <button class="btn btn-ghost btn-sm" id="copyBtn" type="button">Copy checksum</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <h2>Run. Survive. <span class="r">Explore.</span><br><span class="o">Jungle never ends.</span></h2>
+      <p>Get the APK and start your first run.</p>
+      <a class="btn btn-primary" href="DianoRacer.apk" download><span>⬇</span> Download Diano Racer</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© Diano Racer. All rights reserved.</span>
+    <span>Run · Survive · Explore</span>
+  </div>
+</footer>
+
+<script>
+  // Show a hint when the page is opened on a non-Android device
+  (function () {
+    var isAndroid = /android/i.test(navigator.userAgent);
+    if (!isAndroid) document.getElementById('platformBanner').classList.add('show');
+  })();
+
+  // Copy the SHA-256 checksum to the clipboard
+  (function () {
+    var btn = document.getElementById('copyBtn');
+    var sum = 'ef7e46d9579b42a1971f141698d813a5694fec0bdf24609c78808468729180f5';
+    btn.addEventListener('click', function () {
+      function done() {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function () { btn.textContent = 'Copy checksum'; btn.classList.remove('copied'); }, 1800);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(sum).then(done, function () {});
+      } else {
+        var t = document.createElement('textarea');
+        t.value = sum; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(t);
+      }
+    });
+  })();
+</script>
+</body>
+</html>
