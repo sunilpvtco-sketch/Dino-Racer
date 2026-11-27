@@ -476,7 +476,7 @@ const SKINS = [
   { name: 'FROST', desc: 'Light as snow. Jumps highest, power-ups last longer.', stats: [2, 4, 4], base: '#c9cbc2', dorsal: '#8c8e88', dark: 'rgba(95,95,92,.4)', light: 'rgba(255,255,250,.35)', belly: '#f3eee0', stripe: 'rgba(90,92,92,.6)', spine: '#a85a36', spike: 0xb86a44, claw: 0x262626, eye: 0x7ec8e8 }
 ];
 const VILLAIN = { base: '#3b342c', dorsal: '#1a1512', dark: 'rgba(18,14,10,.55)', light: 'rgba(130,110,85,.22)', belly: '#a39074', stripe: 'rgba(105,24,16,.8)', spine: '#4a140c', spike: 0x2a211b, claw: 0x0e0b09, eye: 0xff3214 };
-const SKIN_PRICE = [0, 600, 1500];
+const SKIN_PRICE = [0, 5000, 5000];
 const skinCache = {};
 function skinTextures(key, pal) {
   if (!skinCache[key]) { const s = genSkin(pal), l = genLimb(pal); skinCache[key] = { map: s.map, part: s.part, bump: s.bump, limb: l.map, limbBump: l.bump }; }
@@ -1564,17 +1564,17 @@ function resetWorld() {
 }
 
 /* ------------------------------------------------------------ progression: shop, achievements, goals */
-const ROAD_PRICE = [0, 250, 600, 1000, 1600, 2500];
+const ROAD_PRICE = [0, 10000, 12500, 15000, 17500, 20000];
 const UPG = {
-  life: { name: 'EXTRA LIFE', desc: 'Start every run with one more heart', max: 2, cost: (l) => [900, 2400][l], icon: 'i-heart' },
-  shield: { name: 'PROTECTION', desc: 'Shield lasts 3 s longer per level', max: 5, cost: (l) => 250 + l * 250, icon: 'i-shield' },
-  boost: { name: 'SPEED UP', desc: 'Speed Boost lasts 1.5 s longer per level', max: 5, cost: (l) => 250 + l * 250, icon: 'i-bolt' },
-  magnet: { name: 'MAGNET', desc: 'Magnet lasts 2.5 s longer per level', max: 5, cost: (l) => 200 + l * 200, icon: 'i-magnet' }
+  life: { name: 'EXTRA LIFE', desc: 'Start every run with one more heart', max: 2, cost: (l) => [700, 1000][l], icon: 'i-heart' },
+  shield: { name: 'PROTECTION', desc: 'Shield lasts 3 s longer per level', max: 5, cost: (l) => 400 + l * 150, icon: 'i-shield' },
+  boost: { name: 'SPEED UP', desc: 'Speed Boost lasts 1.5 s longer per level', max: 5, cost: (l) => 400 + l * 150, icon: 'i-bolt' },
+  magnet: { name: 'MAGNET', desc: 'Magnet lasts 2.5 s longer per level', max: 5, cost: (l) => 400 + l * 150, icon: 'i-magnet' }
 };
 const BOOSTERS = {
-  shield: { name: 'START SHIELD', desc: 'Begin your next run protected', cost: 120, icon: 'i-shield' },
-  boost: { name: 'HEAD START', desc: 'Begin your next run with a Speed Boost', cost: 150, icon: 'i-bolt' },
-  life: { name: 'BONUS HEART', desc: '+1 heart for your next run', cost: 250, icon: 'i-heart' }
+  shield: { name: 'START SHIELD', desc: 'Begin your next run protected', cost: 400, icon: 'i-shield' },
+  boost: { name: 'HEAD START', desc: 'Begin your next run with a Speed Boost', cost: 500, icon: 'i-bolt' },
+  life: { name: 'BONUS HEART', desc: '+1 heart for your next run', cost: 600, icon: 'i-heart' }
 };
 // migrate older saves
 profile.owned = profile.owned || { skins: [0], roads: [0] };
