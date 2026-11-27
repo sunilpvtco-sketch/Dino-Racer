@@ -183,6 +183,50 @@ button{font:inherit;color:inherit}
 .card .lock svg{width:34px;height:34px}
 .card .req{position:absolute;top:6px;left:0;right:0;font-size:11px;font-weight:900;text-align:center;color:#fff}
 .note{font-size:12px;color:var(--muted);text-align:center}
+
+/* ---------- Progression & villain ---------- */
+.hud-mid{flex:1;display:flex;flex-direction:column;align-items:center}
+.danger{display:flex;align-items:center;gap:6px;margin-top:4px;padding:3px 8px;border-radius:12px;background:rgba(40,4,2,.6)}
+.danger svg{width:24px;height:24px}
+.dbar{width:min(120px,28vw);height:10px;border-radius:6px;background:rgba(0,0,0,.6);border:2px solid #3a0a05;overflow:hidden}
+.dbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb020,#ff2a1a)}
+#vig{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 42%,rgba(150,8,0,.7))}
+#achToast{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 132px);transform:translate(-50%,-12px);opacity:0;transition:opacity .35s,transform .35s;
+  display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 16px;border-radius:14px;max-width:88vw;text-align:center;
+  background:linear-gradient(#6a4420,#3b230c);border:3px solid #1e1006;box-shadow:inset 0 0 0 2px #b07a42,0 8px 20px rgba(0,0,0,.5)}
+#achToast.show{opacity:1;transform:translate(-50%,0)}
+#achToast b{font-family:var(--font-d);font-weight:400;font-size:17px;letter-spacing:.08em;color:#ffd24a}
+#achToast span{font-size:13px;font-weight:800}
+.tabs{display:flex;gap:6px;width:100%}
+.tabs button{flex:1;padding:8px 4px;border-radius:10px;border:2px solid #1e1006;background:#3b2a1a;font-family:var(--font-d);font-size:15px;letter-spacing:.05em;cursor:pointer;color:#fff}
+.tabs button[aria-selected="true"]{background:linear-gradient(#ffd56a,#ff9a1c);color:#3a1a00}
+.list{display:flex;flex-direction:column;gap:7px;width:100%;max-height:min(48vh,440px);overflow:auto}
+#oGoals{max-height:none}
+.row{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.28)}
+.row.small{padding:6px 10px}.row.small b{font-size:14px}
+.row.ok{background:rgba(70,200,60,.22)}
+.row.claimed{opacity:.6}
+.row svg.ic{width:30px;height:30px;color:#ffc531}
+.row b{display:block;font-family:var(--font-d);font-weight:400;font-size:16px;letter-spacing:.03em}
+.row small{display:block;font-size:12px;color:var(--muted);line-height:1.3}
+.row small.ready{color:#9be38a}
+.pips{display:flex;gap:3px;margin-top:5px}.pips i{width:16px;height:6px;border-radius:3px;background:#1d1006}.pips i.on{background:#ffc531}
+.prog{height:6px;border-radius:4px;background:#1d1006;margin-top:5px;overflow:hidden}.prog i{display:block;height:100%;background:linear-gradient(#8ef05a,#2fa53a)}
+.buy{display:flex;align-items:center;gap:5px;padding:7px 10px;border-radius:10px;border:2px solid #0b4a0f;background:linear-gradient(#94f35d,#2fa53a);font-family:var(--font-d);font-size:15px;cursor:pointer;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.4);white-space:nowrap}
+.buy[disabled]{background:#4a3a2a;border-color:#1e1006;color:#bfa98a;cursor:not-allowed;text-shadow:none}
+.buy.claim{background:linear-gradient(#ffd56a,#ff9a1c);border-color:#7a3a00;color:#3a1a00;text-shadow:none}
+.buy .coin-ic,.reward .coin-ic,.req .coin-ic,.btn .coin-ic,.earned .coin-ic{width:16px;height:16px;vertical-align:-3px;margin-right:3px}
+.reward{font-family:var(--font-d);font-size:14px;color:#ffe08a;white-space:nowrap}
+.tag-done{font-family:var(--font-d);font-size:14px;color:#7dff6a}
+.round-btn span{position:relative}
+.badge{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:var(--blood);border:2px solid #fff}
+.round-row{gap:12px}
+.lock-chip{display:flex;align-items:center;gap:6px;font-weight:900;font-size:13px;color:#ffcf9a}
+.lock-chip svg{width:16px;height:16px}
+.btn-locked{background:linear-gradient(#ffd56a,#ff9a1c 50%,#d86a08);border-color:#5a2a00;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #5a2a00,0 12px 20px rgba(0,0,0,.45);color:#3a1a00;text-shadow:none}
+.card .req{top:auto;bottom:34px;font-family:var(--font-d);font-size:14px}
+.reason{font-family:var(--font-d);font-size:18px;letter-spacing:.05em;color:#ffe08a;text-shadow:0 2px 0 #000;margin-top:-6px}
+.earned{font-family:var(--font-d);font-size:18px;color:#ffe08a}
 @media (prefers-reduced-motion:reduce){#hint .hand{animation:none}.btn,.switch::after{transition:none}}
 @media (min-height:760px){.btn{padding:15px 18px}}
 </style>
@@ -190,6 +234,7 @@ button{font:inherit;color:inherit}
 <body>
 <canvas id="game"></canvas>
 <div id="flash" class="flash"></div>
+<div id="vig"></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -202,6 +247,9 @@ button{font:inherit;color:inherit}
     <symbol id="i-foot" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c-3 0-5-2-5-4.5 0-2 1.6-3.4 2.6-4.6L5 6.5l1.6-1.2 4.4 5.2V2h2v8.5l4.4-5.2L19 6.5l-4.6 6.4c1 1.2 2.6 2.6 2.6 4.6C17 20 15 22 12 22z"/></symbol>
     <symbol id="i-map" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5.5l5.5-2 7 2.5L21 4v14.5l-5.5 2-7-2.5L3 20zm6 .2v10.6l6 2.1V7.8z"/></symbol>
     <symbol id="i-help" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 110 20 10 10 0 010-20zm-.1 14.2a1.4 1.4 0 100 2.8 1.4 1.4 0 000-2.8zM12 5.5c-2.3 0-3.9 1.4-4 3.6h2.4c.1-.9.7-1.5 1.6-1.5s1.5.6 1.5 1.3c0 .7-.4 1.1-1.3 1.7-1.1.7-1.6 1.5-1.5 2.9v.6h2.3v-.5c0-.8.3-1.2 1.3-1.8 1.1-.7 1.8-1.6 1.8-3C16.1 6.8 14.4 5.5 12 5.5z"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path fill="currentColor" d="M2 3h3.2l.8 3H21l-2.4 8.5a1.5 1.5 0 01-1.4 1H8.6a1.5 1.5 0 01-1.4-1.1L4.6 5H2zm7 15a2 2 0 110 4 2 2 0 010-4zm8 0a2 2 0 110 4 2 2 0 010-4z"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#e3342a"/><circle cx="12" cy="12" r="7" fill="#fff4dc"/><circle cx="12" cy="12" r="4" fill="#e3342a"/><circle cx="12" cy="12" r="1.6" fill="#fff4dc"/></symbol>
+    <symbol id="i-trex" viewBox="0 0 24 24"><path fill="#ff4a2a" stroke="#3a0a05" stroke-width="1" d="M3 10.5C3 6.5 6.5 4 11 4h4c3.5 0 6 2 6 4.5V10h-2l-1 1.2-1-1.2-1 1.2-1-1.2h-2.5c-.6 0-1 .5-1 1v1.5h9V15c0 2.5-2.5 4.5-6 4.5H8.5L6 21v-3.2C4.2 16.5 3 13.8 3 10.5z"/><circle cx="9" cy="8" r="1.4" fill="#ffe14a"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10V7a5 5 0 0110 0v3h1.5A1.5 1.5 0 0120 11.5v9a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 20.5v-9A1.5 1.5 0 015.5 10zm2.5 0h5V7a2.5 2.5 0 00-5 0z"/></symbol>
     <symbol id="i-heart" viewBox="0 0 24 24"><path fill="#ff2d3d" stroke="#7a0010" stroke-width="1.2" d="M12 21s-7.6-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.7 3.7 4.2 7.2C19.6 16.4 12 21 12 21z"/><path fill="#fff" opacity=".55" d="M6.2 7.2c-1.3.3-2 1.4-2 2.6.9-1 1.9-1.6 3.2-1.8-.2-.5-.6-.8-1.2-.8z"/></symbol>
     <symbol id="i-run" viewBox="0 0 24 24"><path fill="#ffd24a" d="M4 19h16v2H4zm1.5-3.5l3-7 2.4 1.7L13 6l2.2 1.2-2.6 5.4-2.4-1.7-2.6 5.6zM16 4.5l4.5 1-1 4.5-1.6-.4.6-2.8-2.8-.6z"/></symbol>
@@ -231,7 +279,7 @@ button{font:inherit;color:inherit}
 <section id="menu" class="screen dim" hidden>
   <div class="menu-top">
     <button class="icon-btn" id="mSettings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
-    <div class="wallet"><i class="coin-ic"></i><span id="walletCoins">0</span></div>
+    <div class="wallet"><i class="coin-ic"></i><span id="walletCoins" class="wallet-n">0</span></div>
   </div>
   <div class="menu-center">
     <div class="logo small"><div class="logo-board"><b class="lt l1" data-t="DIANO"><span>DIANO</span></b><b class="lt l2" data-t="RACER"><span>RACER</span></b><div class="claw"><i></i><i></i><i></i></div></div><div class="logo-tag">RUN · SURVIVE · EXPLORE</div></div>
@@ -244,20 +292,22 @@ button{font:inherit;color:inherit}
     <div class="round-row">
       <button class="round-btn" id="mDino"><span><svg><use href="#i-foot"/></svg></span>DINO</button>
       <button class="round-btn" id="mJourney"><span><svg><use href="#i-map"/></svg></span>JOURNEY</button>
-      <button class="round-btn" id="mSettings2"><span><svg><use href="#i-gear"/></svg></span>SETTINGS</button>
+      <button class="round-btn" id="mShop"><span><svg><use href="#i-cart"/></svg></span>SHOP</button>
+      <button class="round-btn" id="mAwards"><span><svg><use href="#i-trophy"/></svg><em class="badge" id="awardBadge" hidden></em></span>AWARDS</button>
     </div>
   </div>
 </section>
 
 <!-- Character select -->
 <section id="charSel" class="screen" hidden>
-  <div class="sel-head"><button class="icon-btn" id="cBack" aria-label="Back"><svg><use href="#i-back"/></svg></button><h2>CHOOSE YOUR DINO</h2></div>
+  <div class="sel-head"><button class="icon-btn" id="cBack" aria-label="Back"><svg><use href="#i-back"/></svg></button><h2>CHOOSE YOUR DINO</h2><div class="wallet" style="margin-left:auto"><i class="coin-ic"></i><span class="wallet-n">0</span></div></div>
   <div class="sel-mid">
     <button class="arrow" id="cPrev" aria-label="Previous dino"><svg><use href="#i-arrowL"/></svg></button>
     <button class="arrow" id="cNext" aria-label="Next dino"><svg><use href="#i-arrowR"/></svg></button>
   </div>
   <div class="sel-card panel" style="padding:16px 18px">
     <div class="name-plate" id="cName">DIANO</div>
+    <div class="lock-chip" id="cLock" hidden><svg><use href="#i-lock"/></svg>LOCKED · unlock with coins</div>
     <div class="sel-desc" id="cDesc"></div>
     <div class="stat-row"><span>SPEED</span><div class="bar"><i id="cSpeed"></i></div></div>
     <div class="stat-row"><span>JUMP</span><div class="bar"><i id="cJump"></i></div></div>
@@ -272,7 +322,8 @@ button{font:inherit;color:inherit}
   <div class="panel-wrap"><div class="panel-title">CHOOSE YOUR JOURNEY</div>
     <div class="panel stack" style="width:min(440px,94vw)">
       <div class="cards" id="cards"></div>
-      <div class="note">Every run loops through all five areas. Your pick is where the run starts.</div>
+      <div class="wallet"><i class="coin-ic"></i><span class="wallet-n">0</span></div>
+      <div class="note">Unlock a road with coins to start your runs there. Every run still loops through all five areas.</div>
       <button class="btn btn-wood" id="jBack">BACK</button>
     </div>
   </div>
@@ -322,7 +373,8 @@ button{font:inherit;color:inherit}
 <div id="hud" hidden>
   <div class="hud-top">
     <button class="icon-btn" id="btnPause" aria-label="Pause"><svg><use href="#i-pause"/></svg></button>
-    <div class="hud-score" id="hScore">0</div>
+    <div class="hud-mid"><div class="hud-score" id="hScore">0</div>
+      <div class="danger" id="danger" hidden><svg><use href="#i-trex"/></svg><div class="dbar"><i id="dFill"></i></div></div></div>
     <div class="hud-stats">
       <div class="stat"><i class="coin-ic"></i><b id="hCoins">0</b></div>
       <div class="stat"><svg><use href="#i-run"/></svg><b id="hDist">0 m</b></div>
@@ -330,6 +382,7 @@ button{font:inherit;color:inherit}
     </div>
   </div>
   <div id="zoneToast"></div>
+  <div id="achToast"></div>
   <div id="hint" hidden><svg class="hand"><use href="#i-hand"/></svg><div>SWIPE TO MOVE<br><small style="font-size:13px">UP = JUMP · DOWN = SLIDE</small></div></div>
   <div class="hud-bottom">
     <div class="pw" id="pwMagnet" style="--c:#ff3a3a" hidden><svg><use href="#i-magnet"/></svg><b></b></div>
@@ -338,6 +391,31 @@ button{font:inherit;color:inherit}
   </div>
   <div class="egg-chip" style="right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 14px)"><svg width="20" height="20"><use href="#i-egg"/></svg><span id="hEggs">0/5</span></div>
 </div>
+
+<!-- Shop -->
+<section id="shop" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">SHOP</div>
+    <div class="panel stack" style="width:min(420px,94vw)">
+      <div class="wallet"><i class="coin-ic"></i><span class="wallet-n">0</span></div>
+      <div class="tabs" id="shopTabs" role="tablist"><button data-tab="upg" role="tab">UPGRADES</button><button data-tab="boost" role="tab">BOOSTERS</button></div>
+      <div class="list" id="shopList"></div>
+      <div class="note">Unlock new dinos in DINO and new roads in JOURNEY.</div>
+      <button class="btn btn-wood" id="shopBack">BACK</button>
+    </div>
+  </div>
+</section>
+
+<!-- Awards -->
+<section id="awards" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">AWARDS</div>
+    <div class="panel stack" style="width:min(420px,94vw)">
+      <div class="wallet"><i class="coin-ic"></i><span class="wallet-n">0</span></div>
+      <div class="tabs" id="awardTabs" role="tablist"><button data-tab="goals" role="tab">GOALS</button><button data-tab="ach" role="tab">ACHIEVEMENTS</button></div>
+      <div class="list" id="awardList"></div>
+      <button class="btn btn-wood" id="awBack">BACK</button>
+    </div>
+  </div>
+</section>
 
 <!-- Pause -->
 <section id="pause" class="screen dim-strong" hidden>
@@ -354,12 +432,16 @@ button{font:inherit;color:inherit}
 <!-- Game over -->
 <section id="over" class="screen dim-strong" hidden>
   <div class="over-title">GAME OVER</div>
-  <div class="panel stack" style="padding:18px">
+  <div class="reason" id="oReason"></div>
+  <div class="panel stack" style="padding:16px 18px">
     <div id="newBest" class="new-best" hidden>NEW BEST!</div>
     <div class="lbl">SCORE</div><div class="big-num" id="oScore">0</div>
     <div class="lbl">BEST</div><div class="big-num" style="font-size:30px" id="oBest">0</div>
     <div class="mini-stats"><div><i class="coin-ic"></i><span id="oCoins">0</span><small>COINS</small></div><div><span id="oDist">0 m</span><small>DISTANCE</small></div><div><span id="oEggs">0</span><small>EGGS</small></div></div>
+    <div class="earned" id="oEarned"></div>
+    <div class="list" id="oGoals"></div>
     <div class="btn-row"><button class="btn btn-green" id="oRetry">RETRY</button><button class="btn btn-wood" id="oHome">HOME</button></div>
+    <button class="btn btn-blue" id="oShop" style="font-size:19px;padding:10px">SHOP &amp; UPGRADES</button>
     <div class="quote" id="oQuote">"EVERY FALL MAKES YOU STRONGER!"</div>
   </div>
 </section>

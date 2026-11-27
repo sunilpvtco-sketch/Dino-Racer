@@ -23,6 +23,13 @@ Then open http://localhost:8000.
 - Synthesised music and sound effects, vibration, HD/Fast graphics setting
 - Works offline (service worker)
 
+## Progression
+- **Villain T-Rex** chases you: every crash or stumble brings it closer (danger meter at the top).
+  If it reaches you the run ends. Shake it off to score an escape.
+- **Shop**: permanent upgrades (Extra Life, Protection, Speed Up, Magnet) and one-run boosters.
+- **Unlocks**: buy new dinos (Rusty, Frost) and new starting roads with coins.
+- **Awards**: 16 achievements with coin rewards and three rotating goals that get harder.
+
 ## Layout
 - `www/index.html` — UI and styles
 - `www/game.js` — the game
