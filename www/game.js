@@ -1138,6 +1138,7 @@ const MODEL_PAL = [
   { body: 0xd6d6ce, dark: 0x5e605c, belly: 0xf4efe2, eye: 0x58c8ff }
 ];
 const VILLAIN_PAL = { body: 0x3b302a, dark: 0x0d0b0a, belly: 0x7c2216, eye: 0xff2a10 };
+const MODEL_URL = window.DIANO_MODEL || 'models/velociraptor.gltf';
 function loadGLTF(url) { return new Promise((res, rej) => new THREE.GLTFLoader().load(url, res, undefined, rej)); }
 const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
 function attachModel(rig, gltf, pal, opts = {}) {
@@ -1186,7 +1187,7 @@ function setModelSkin(i) {
 }
 async function loadModels() {
   try {
-    const [a, b] = await Promise.all([loadGLTF('models/velociraptor.gltf'), loadGLTF('models/velociraptor.gltf')]);
+    const [a, b] = await Promise.all([loadGLTF(MODEL_URL), loadGLTF(MODEL_URL)]);
     attachModel(dino, a, MODEL_PAL[profile.skin], { scale: 0.4 });
     attachModel(villain, b, VILLAIN_PAL, { trex: true, scale: 0.5 });
   } catch (e) { console.warn('Rigged model unavailable, using built-in dinos', e); }
