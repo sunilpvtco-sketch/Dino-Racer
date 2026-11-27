@@ -847,7 +847,7 @@ function buildChunk(zone) {
       for (let i = 0; i < 7; i++) { const x = s * R(4.3, 7), z = -R(0, 24); const r = Math.random(); r < 0.35 ? fern(g, x, z) : r < 0.6 ? grass(g, x, z) : r < 0.8 ? bush(g, x, z) : banana(g, x, z); }
       for (let i = 0; i < 6; i++) grass(g, s * R(3.9, 4.6), -R(0, 24), R(0.5, 0.9));
       for (let i = 0; i < 3; i++) { const x = s * R(7, 11), z = -R(0, 24); Math.random() < 0.4 ? palm(g, x, z) : tree(g, x, z, R(0.8, 1.05)); }
-      for (let i = 0; i < 3; i++) { const x = s * R(13, 30), z = -R(0, 24); Math.random() < 0.25 ? palm(g, x, z, R(8, 11)) : tree(g, x, z, R(1.0, 1.4)); }
+      for (let i = 0; i < 2; i++) { const x = s * R(13, 30), z = -R(0, 24); Math.random() < 0.3 ? palm(g, x, z, R(8, 11)) : tree(g, x, z, R(1.0, 1.4)); }
       if (TREES.bush) for (let i = 0; i < 2; i++) placeParts(g, TREES.bush, s * R(5.5, 9), 0, -R(0, 24), R(2.2, 3.2));
       if (Math.random() < 0.5) prop(g, pick(['stump', 'log', 'rock_large', 'mushroom_red']), s * R(4.6, 7), -R(1, 23), R(0.5, 0.9));
       for (let i = 0; i < 2; i++) prop(g, 'flower_red', s * R(4.3, 6), -R(0, 24), R(0.35, 0.55));
@@ -1239,8 +1239,18 @@ async function loadScenery() {
       const box = new THREE.Box3().setFromObject(g.scene), h = box.max.y - box.min.y, c = box.getCenter(new THREE.Vector3()); const parts = [];
       g.scene.traverse((o) => {
         if (!o.isMesh) return;
-        const geo = o.geometry.clone(); geo.applyMatrix4(o.matrixWorld); geo.translate(-c.x, -box.min.y, -c.z); geo.scale(1 / h, 1 / h, 1 / h);
-        for (const a of Object.keys(geo.attributes)) if (geo.attributes[a].normalized || !(geo.attributes[a].array instanceof Float32Array)) { const src = geo.attributes[a], out = new Float32Array(src.count * src.itemSize); for (let i = 0; i < src.count; i++) for (let k = 0; k < src.itemSize; k++) out[i * src.itemSize + k] = src.getComponent ? src.getComponent(i, k) : src.array[i * src.itemSize + k]; geo.setAttribute(a, new THREE.BufferAttribute(out, src.itemSize)); }
+        // quantized attributes (int8/int16) must become floats before any transform is applied
+        const geo = new THREE.BufferGeometry(); if (o.geometry.index) geo.setIndex(o.geometry.index.clone());
+        const getters = ['getX', 'getY', 'getZ', 'getW'];
+        for (const a of ['position', 'normal']) {
+          const src = o.geometry.attributes[a]; if (!src) continue;
+          const n = Math.min(3, src.itemSize), out = new Float32Array(src.count * 3);
+          for (let i = 0; i < src.count; i++) for (let k = 0; k < n; k++) out[i * 3 + k] = src[getters[k]](i);
+          geo.setAttribute(a, new THREE.BufferAttribute(out, 3));
+        }
+        if (!geo.attributes.normal) geo.computeVertexNormals();
+        geo.applyMatrix4(o.matrixWorld); geo.translate(-c.x, -box.min.y, -c.z); geo.scale(1 / h, 1 / h, 1 / h);
+        geo.attributes.normal && geo.attributes.normal.array.length && geo.normalizeNormals();
         const nm = o.material.name, key = 'prop_' + nm;
         MAT[key] = MAT[key] || std({ color: PROP_COL[nm] !== undefined ? PROP_COL[nm] : 0x888070, roughness: nm === 'crystal' ? 0.2 : 0.85, flatShading: true, emissive: nm === 'crystal' ? 0x0a4aa0 : 0x000000 });
         parts.push({ geo, mat: MAT[key] });
@@ -1253,10 +1263,12 @@ function placeParts(g, parts, x, y, z, s, ry = R(0, PI * 2), shadow = true) {
   for (const p of parts) { const m = M(p.geo, p.mat, x, y, z, s, s, s, 0, ry, 0); m.castShadow = shadow; g.add(m); }
 }
 function tree(g, x, z, s = 1, kinds) {
-  const list = (kinds || ['oak_a', 'oak_b', 'ash', 'aspen']).filter((k) => TREES[k]);
+  // far trees use the lighter aspen and cast no shadow (only near trees reach the shadow camera anyway)
+  const far = Math.abs(x) > 12.5;
+  const list = (kinds || (far ? ['aspen', 'aspen', 'oak_a'] : ['oak_a', 'oak_b', 'ash', 'aspen'])).filter((k) => TREES[k]);
   if (!list.length) { bigTree(g, x, z, s); return; }
   const k = pick(list);
-  placeParts(g, TREES[k], x, 0, z, (k === 'aspen' ? 11 : 9.5) * s * R(0.85, 1.15));
+  placeParts(g, TREES[k], x, 0, z, (k === 'aspen' ? 11 : 9.5) * s * R(0.85, 1.15), R(0, PI * 2), !far);
 }
 function prop(g, name, x, z, h, y = 0) { if (PROPS[name]) placeParts(g, PROPS[name], x, y, z, h); else if (name.startsWith('rock')) rock(g, x, z, h * 0.6, y); }
 async function loadModels() {
@@ -1650,8 +1662,8 @@ function stripDecor(g, zone, len) {
   for (const s of [-1, 1]) {
     g.add(M(new THREE.PlaneGeometry(40, len).rotateX(-PI / 2).translate(0, 0, -len / 2), MAT.ground, s * 23.6, -0.02, 0));
     for (let i = 0; i < len / 4; i++) { const x = s * R(4.4, 7), z = -R(0, len); Math.random() < 0.5 ? fern(g, x, z) : grass(g, x, z); }
-    for (let i = 0; i < len / 9; i++) { const x = s * R(7, 13), z = -R(0, len); zone !== 'ruins' && Math.random() < 0.35 ? palm(g, x, z) : tree(g, x, z, R(0.8, 1.1)); }
-    for (let i = 0; i < len / 12; i++) tree(g, s * R(14, 28), -R(0, len), R(1, 1.4));
+    for (let i = 0; i < len / 13; i++) { const x = s * R(7, 12), z = -R(0, len); zone !== 'ruins' && Math.random() < 0.45 ? palm(g, x, z) : tree(g, x, z, R(0.8, 1.1)); }
+    for (let i = 0; i < len / 20; i++) tree(g, s * R(14, 28), -R(0, len), R(1, 1.4), ['aspen']);
     if (zone === 'ruins') pillar(g, s * 4.7, -R(4, len - 4));
   }
 }
@@ -1667,7 +1679,7 @@ function buildJunction(zone) {
   // the dead end: ground, a wall of boulders and jungle, and an arrow sign
   g.add(M(new THREE.PlaneGeometry(8, 46).rotateX(-PI / 2).translate(0, 0, -23), MAT.ground, 0, -0.02, cz - H));
   for (let x = -4.6; x <= 4.6; x += 1.5) rock(g, x + R(-0.3, 0.3), cz - H - R(0.8, 1.6), R(1.1, 1.7));
-  for (let i = 0; i < 6; i++) tree(g, R(-6, 6), cz - H - R(4, 12), R(1, 1.4));
+  for (let i = 0; i < 4; i++) tree(g, R(-6, 6), cz - H - R(4, 12), R(1, 1.4));
   for (let i = 0; i < 6; i++) bush(g, R(-6, 6), cz - H - R(2.5, 5), R(1, 1.6));
   sign(g, 0, cz - H - 0.4, MAT.signs.turn, 1.7);
   if (zone === 'ruins') { g.add(M(G.box, MAT.stone, 0, 2.4, cz - H - 2.6, 12, 4.8, 1.4)); }
