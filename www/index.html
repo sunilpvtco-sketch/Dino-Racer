@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Diano Racer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b1a0f">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
+<style>
+/* Layout: full-bleed WebGL canvas, carved-wood UI boards floating over the 3D jungle. */
+:root{
+  --wood:#7a4f2a; --wood-d:#3a220d; --wood-l:#a8743f; --ink:#1c0f04;
+  --leaf:#46c63a; --leaf-d:#166f1c; --gold:#ffc531; --orange:#ff9420; --blood:#e3342a;
+  --sky:#2f8fe0; --panel:rgba(48,30,13,.96); --text:#fff4dc; --muted:#e2c9a0;
+  --font-d:"Lilita One","Arial Black",Impact,sans-serif;
+  --font-b:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:#07130b;color:var(--text);overflow:hidden;touch-action:none;
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font-family:var(--font-b)}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;background:#07130b}
+button{font:inherit;color:inherit}
+.screen{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px))}
+.dim{background:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,.05),rgba(0,0,0,.6))}
+.dim-strong{background:rgba(5,10,6,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+
+/* ---------- Logo ---------- */
+.logo{display:flex;flex-direction:column;align-items:center;transform:rotate(-3deg);filter:drop-shadow(0 12px 16px rgba(0,0,0,.6))}
+.logo-board{position:relative;padding:10px 30px 4px;border-radius:18px;line-height:.82;text-align:center;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.06) 0 3px,transparent 3px 11px),linear-gradient(#8a5a2c,#56330f);
+  border:4px solid #24130a;box-shadow:inset 0 0 0 3px #b07a42,inset 0 -10px 20px rgba(0,0,0,.35)}
+.lt{position:relative;display:block;isolation:isolate;font-family:var(--font-d);letter-spacing:.01em;white-space:nowrap}
+.lt::before{content:attr(data-t);position:absolute;inset:0;z-index:-1;color:#2a1405;-webkit-text-stroke:12px #2a1405;text-shadow:0 7px 0 #2a1405}
+.lt span{background:var(--g);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.l1{font-size:clamp(56px,17vw,96px);--g:linear-gradient(#ffe56a,#ffae25 52%,#e7640f)}
+.l2{font-size:clamp(48px,14.5vw,82px);--g:linear-gradient(#b8ff6c,#4fd03b 52%,#1d8a24);margin-top:-2px}
+.claw{position:absolute;right:-22px;top:46%;width:46px;height:70px;transform:rotate(18deg)}
+.claw i{position:absolute;top:0;width:7px;height:100%;border-radius:50% 50% 40% 40%;background:linear-gradient(#ff5a3c,#a3110a);box-shadow:0 0 0 2px #2a0703}
+.claw i:nth-child(1){left:0;height:82%}.claw i:nth-child(2){left:15px}.claw i:nth-child(3){left:30px;height:86%;top:8px}
+.logo-tag{margin-top:-6px;padding:6px 18px;font-family:var(--font-d);font-size:clamp(15px,4.4vw,22px);letter-spacing:.05em;color:#ffcf4a;
+  background:linear-gradient(#5d3a19,#3b220c);border:3px solid #22120a;border-radius:10px;text-shadow:0 2px 0 #1b0b02;transform:rotate(1deg)}
+.logo.small .l1{font-size:52px}.logo.small .l2{font-size:44px}.logo.small .logo-tag{font-size:14px}
+.tagline{font-family:var(--font-d);font-size:20px;color:#ffe08a;text-shadow:0 2px 0 #3b1d05,0 0 12px rgba(0,0,0,.7);transform:rotate(-2deg);letter-spacing:.04em}
+
+/* ---------- Buttons ---------- */
+.btn{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:min(300px,80vw);padding:13px 18px;border-radius:15px;
+  font-family:var(--font-d);font-size:23px;letter-spacing:.05em;color:#fff;cursor:pointer;text-shadow:0 2px 0 rgba(0,0,0,.45);transition:transform .08s,filter .15s}
+.btn:active{transform:translateY(3px)}
+.btn:hover{filter:brightness(1.08)}
+.btn:focus-visible,.icon-btn:focus-visible,.round-btn:focus-visible,.card:focus-visible,.arrow:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn-green{background:linear-gradient(#94f35d,#41c63c 46%,#1f9124);border:2px solid #0b4a0f;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5),inset 0 -4px 0 rgba(0,0,0,.2),0 5px 0 #0b4a0f,0 12px 20px rgba(0,0,0,.45)}
+.btn-wood{background:repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 2px,transparent 2px 9px),linear-gradient(#b07e4f,#7d5331 50%,#5c3b1f);border:2px solid #2c1a0a;
+  box-shadow:inset 0 2px 0 rgba(255,230,190,.35),0 5px 0 #2c1a0a,0 12px 20px rgba(0,0,0,.45)}
+.btn-blue{background:linear-gradient(#6cc0ff,#2a86e8 50%,#1659b8);border:2px solid #0b2f66;box-shadow:inset 0 2px 0 rgba(255,255,255,.45),0 5px 0 #0b2f66,0 12px 20px rgba(0,0,0,.45)}
+.btn-big{font-size:34px;padding:14px 18px}
+.btn-row{display:flex;gap:10px;width:min(320px,86vw)}
+.btn-row .btn{flex:1;width:auto;font-size:21px}
+.icon-btn{width:48px;height:48px;display:grid;place-items:center;border-radius:13px;cursor:pointer;color:#fff;
+  background:linear-gradient(#a7774a,#6a4524);border:2px solid #2c1a0a;box-shadow:inset 0 2px 0 rgba(255,230,190,.35),0 4px 0 #2c1a0a}
+.icon-btn svg{width:26px;height:26px}
+.round-row{display:flex;gap:18px;margin-top:6px}
+.round-btn{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;background:none;border:0;font-family:var(--font-d);font-size:14px;letter-spacing:.05em;color:#fff;text-shadow:0 2px 0 #000}
+.round-btn span{width:58px;height:58px;display:grid;place-items:center;border-radius:16px;background:linear-gradient(#a7774a,#6a4524);border:2px solid #2c1a0a;box-shadow:inset 0 2px 0 rgba(255,230,190,.35),0 4px 0 #2c1a0a}
+.round-btn svg{width:30px;height:30px}
+
+/* ---------- Panels ---------- */
+.panel{position:relative;width:min(380px,92vw);max-height:calc(100% - 40px);overflow:auto;padding:30px 18px 18px;border-radius:20px;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.04) 0 3px,transparent 3px 12px),linear-gradient(#5b3a1b,#3a230d);
+  border:3px solid #1e1006;box-shadow:inset 0 0 0 3px #8d5f33,inset 0 0 40px rgba(0,0,0,.45),0 18px 44px rgba(0,0,0,.6)}
+.panel-wrap{position:relative;padding-top:22px;display:flex;flex-direction:column;align-items:center}
+.panel-title{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2;white-space:nowrap;padding:6px 26px;
+  font-family:var(--font-d);font-size:28px;letter-spacing:.04em;color:#ffd24a;text-shadow:0 3px 0 #3a1f05;
+  background:linear-gradient(#9a6635,#61401f);border:3px solid #1e1006;border-radius:13px;box-shadow:inset 0 2px 0 rgba(255,220,170,.35),0 6px 12px rgba(0,0,0,.4)}
+.stack{display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* ---------- Loading ---------- */
+#loading{background:radial-gradient(ellipse at 50% 30%,#2f6a2a,#0c2410 60%,#06120a);gap:22px}
+.leaves-bg{position:absolute;inset:0;pointer-events:none;opacity:.5;background:
+  radial-gradient(ellipse 40% 26% at -5% 10%,#1d5a1c 60%,transparent 61%),radial-gradient(ellipse 38% 24% at 105% 0%,#1a521a 60%,transparent 61%),
+  radial-gradient(ellipse 50% 22% at 0% 104%,#123d12 60%,transparent 61%),radial-gradient(ellipse 50% 22% at 100% 104%,#164716 60%,transparent 61%)}
+.loadbar{width:min(300px,76vw);height:22px;padding:3px;border-radius:12px;background:#2a170a;border:3px solid #120802;box-shadow:inset 0 0 0 2px #7a5330}
+.loadbar i{display:block;height:100%;width:0;border-radius:7px;background:linear-gradient(#ffd56a,#ff8a1c);box-shadow:inset 0 2px 0 rgba(255,255,255,.5);transition:width .2s}
+#loadText{font-family:var(--font-d);font-size:20px;letter-spacing:.08em;color:#fff;text-shadow:0 2px 0 #000}
+#loadSub{font-size:13px;color:var(--muted);min-height:18px}
+
+/* ---------- Menu ---------- */
+#menu{justify-content:flex-start}
+#menu .menu-buttons{margin-top:auto}
+.menu-top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:520px}
+.wallet{display:flex;align-items:center;gap:7px;padding:6px 12px 6px 7px;border-radius:24px;background:rgba(20,12,5,.78);border:2px solid #6b4a26;font-family:var(--font-d);font-size:19px}
+.menu-center{display:flex;flex-direction:column;align-items:center;gap:12px}
+.menu-buttons{display:flex;flex-direction:column;align-items:center;gap:11px}
+.best-chip{font-family:var(--font-d);font-size:16px;letter-spacing:.04em;color:#ffe9b0;text-shadow:0 2px 0 #000;padding:4px 12px;border-radius:10px;background:rgba(0,0,0,.4)}
+
+/* ---------- Character select ---------- */
+#charSel{justify-content:space-between}
+.sel-head{display:flex;align-items:center;gap:12px;width:100%;max-width:520px}
+.sel-head h2{margin:0;font-family:var(--font-d);font-size:26px;letter-spacing:.04em;color:#ffd24a;text-shadow:0 3px 0 #3a1f05}
+.sel-mid{flex:1;width:100%;max-width:520px;display:flex;align-items:center;justify-content:space-between}
+.arrow{width:54px;height:76px;border:0;cursor:pointer;background:none;filter:drop-shadow(0 4px 0 #3a1f05)}
+.arrow svg{width:100%;height:100%}
+.sel-card{width:min(340px,90vw);display:flex;flex-direction:column;align-items:center;gap:10px}
+.name-plate{font-family:var(--font-d);font-size:30px;letter-spacing:.06em;padding:4px 28px;color:#ffd24a;background:linear-gradient(#8d5d30,#5b3a1c);border:3px solid #1e1006;border-radius:12px;text-shadow:0 3px 0 #3a1f05}
+.stat-row{display:grid;grid-template-columns:72px 1fr;align-items:center;gap:10px;width:100%;font-family:var(--font-d);font-size:16px;letter-spacing:.05em}
+.bar{height:14px;border-radius:8px;background:#1d1006;border:2px solid #0e0702;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(#ffd56a,#ff8a1c);transition:width .3s}
+.sel-desc{font-size:14px;color:var(--muted);text-align:center;min-height:20px}
+.dots{display:flex;gap:7px}
+.dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.35)}
+.dots i.on{background:#fff}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;z-index:5;pointer-events:none;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(12px,env(safe-area-inset-left,0px))}
+.hud-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+#hud .icon-btn{pointer-events:auto}
+.hud-score{flex:1;text-align:center;font-family:var(--font-d);font-size:30px;letter-spacing:.03em;color:#fff;text-shadow:0 3px 0 #2a1405,0 0 14px rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
+.hud-stats{display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.stat{display:flex;align-items:center;gap:7px;min-width:104px;justify-content:space-between;padding:4px 11px 4px 6px;border-radius:20px;background:rgba(18,10,4,.72);border:2px solid #5f4122;font-family:var(--font-d);font-size:19px;font-variant-numeric:tabular-nums}
+.stat svg,.stat .coin-ic{width:24px;height:24px;flex:none}
+.coin-ic{display:inline-block;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3a8,#ffcf2e 35%,#e09207 70%,#9a5a00);box-shadow:inset 0 0 0 2px #b36d00}
+.hud-bottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;justify-content:center;gap:12px}
+.pw{position:relative;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p,1)*360deg),rgba(0,0,0,.55) 0);box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.pw::before{content:"";position:absolute;inset:5px;border-radius:50%;background:radial-gradient(circle at 40% 30%,#3a3a3a,#111)}
+.pw svg{position:relative;width:30px;height:30px}
+.pw b{position:absolute;bottom:-16px;font-family:var(--font-d);font-size:13px;text-shadow:0 2px 0 #000}
+.egg-chip{position:absolute;right:0;bottom:0;font-family:var(--font-d);font-size:15px;display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:14px;background:rgba(18,10,4,.72);border:2px solid #5f4122}
+#zoneToast{position:absolute;left:50%;top:22%;transform:translate(-50%,-50%) rotate(-2deg);font-family:var(--font-d);font-size:clamp(26px,8vw,40px);letter-spacing:.05em;color:#ffe066;
+  text-shadow:0 4px 0 #3a1f05,0 0 20px rgba(0,0,0,.6);opacity:0;transition:opacity .5s,transform .5s;white-space:nowrap;text-align:center}
+#zoneToast small{display:block;font-size:.45em;color:#fff;letter-spacing:.2em}
+#zoneToast.show{opacity:1;transform:translate(-50%,-50%) rotate(-2deg) scale(1.04)}
+#hint{position:absolute;left:50%;top:56%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;font-family:var(--font-d);font-size:18px;letter-spacing:.05em;text-shadow:0 2px 0 #000;transition:opacity .6s;text-align:center}
+#hint .hand{width:64px;height:64px;animation:swipe 1.4s ease-in-out infinite}
+@keyframes swipe{0%,100%{transform:translateX(-30px)}50%{transform:translateX(30px)}}
+.flash{position:fixed;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(220,30,20,.55));opacity:0;transition:opacity .35s}
+.flash.on{opacity:1;transition:none}
+
+/* ---------- Lists / toggles ---------- */
+.how-list{display:flex;flex-direction:column;gap:10px;width:100%}
+.how-item{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25)}
+.how-item svg{width:36px;height:36px}
+.how-item b{display:block;font-family:var(--font-d);font-size:18px;letter-spacing:.03em;font-weight:400}
+.how-item span{font-size:13px;color:var(--muted)}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;width:100%;padding:8px 4px;font-family:var(--font-d);font-size:19px;letter-spacing:.04em;border-bottom:1px solid rgba(255,220,170,.12)}
+.switch{width:58px;height:32px;border-radius:18px;border:2px solid #0e0702;background:#3b2a1a;position:relative;cursor:pointer;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#e9dccb;box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .2s}
+.switch[aria-checked="true"]{background:linear-gradient(#6ee14b,#24a02a)}
+.switch[aria-checked="true"]::after{transform:translateX(26px);background:#fff}
+.seg{display:flex;border-radius:12px;overflow:hidden;border:2px solid #0e0702}
+.seg button{border:0;padding:6px 12px;cursor:pointer;background:#3b2a1a;font-family:var(--font-d);font-size:15px;letter-spacing:.04em}
+.seg button[aria-pressed="true"]{background:linear-gradient(#6ee14b,#24a02a)}
+.score-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.score-table td{padding:7px 8px;border-bottom:1px solid rgba(255,220,170,.1);font-weight:800}
+.score-table td:first-child{width:32px;font-family:var(--font-d);color:#ffd24a}
+.score-table td.r{text-align:right}
+.score-table tr.top td{background:rgba(70,200,60,.25)}
+.empty{padding:16px;text-align:center;color:var(--muted)}
+.big-num{font-family:var(--font-d);font-size:44px;line-height:1;color:#fff;text-shadow:0 3px 0 #3a1f05;font-variant-numeric:tabular-nums}
+.lbl{font-family:var(--font-d);font-size:16px;letter-spacing:.12em;color:#ffd24a}
+.over-title{font-family:var(--font-d);font-size:clamp(44px,13vw,64px);color:#ff4a32;letter-spacing:.03em;text-shadow:0 4px 0 #4a0b05,0 0 24px rgba(0,0,0,.7);transform:rotate(-2deg)}
+.quote{font-family:var(--font-d);font-size:17px;color:#ffe08a;text-align:center;letter-spacing:.03em}
+.mini-stats{display:flex;justify-content:center;gap:10px;width:100%}
+.mini-stats div{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;background:rgba(0,0,0,.28);font-family:var(--font-d);font-size:20px;font-variant-numeric:tabular-nums}
+.mini-stats small{font-size:11px;letter-spacing:.12em;color:var(--muted)}
+.new-best{font-family:var(--font-d);font-size:16px;padding:3px 12px;border-radius:10px;background:linear-gradient(#ffd56a,#ff8a1c);color:#3a1a00;letter-spacing:.06em}
+
+/* ---------- Journey ---------- */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%}
+.card{position:relative;aspect-ratio:3/4;max-width:100%;border-radius:12px;overflow:hidden;cursor:pointer;border:3px solid #1e1006;background:#14200f center/cover no-repeat;padding:0}
+.card span{position:absolute;left:0;right:0;bottom:0;padding:16px 4px 6px;font-family:var(--font-d);font-size:13px;letter-spacing:.04em;text-align:center;background:linear-gradient(transparent,rgba(0,0,0,.85))}
+.card.on{border-color:#5ef04a;box-shadow:0 0 0 2px #5ef04a,0 0 18px rgba(94,240,74,.5)}
+.card.locked{filter:grayscale(.85) brightness(.55);cursor:not-allowed}
+.card .lock{position:absolute;inset:0;display:grid;place-items:center}
+.card .lock svg{width:34px;height:34px}
+.card .req{position:absolute;top:6px;left:0;right:0;font-size:11px;font-weight:900;text-align:center;color:#fff}
+.note{font-size:12px;color:var(--muted);text-align:center}
+
+/* ---------- Progression & villain ---------- */
+.hud-mid{flex:1;display:flex;flex-direction:column;align-items:center}
+.danger{display:flex;align-items:center;gap:6px;margin-top:4px;padding:3px 8px;border-radius:12px;background:rgba(40,4,2,.6)}
+.danger svg{width:24px;height:24px}
+.dbar{width:min(120px,28vw);height:10px;border-radius:6px;background:rgba(0,0,0,.6);border:2px solid #3a0a05;overflow:hidden}
+.dbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb020,#ff2a1a)}
+#vig{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 42%,rgba(150,8,0,.7))}
+#achToast{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 132px);transform:translate(-50%,-12px);opacity:0;transition:opacity .35s,transform .35s;
+  display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 16px;border-radius:14px;max-width:88vw;text-align:center;
+  background:linear-gradient(#6a4420,#3b230c);border:3px solid #1e1006;box-shadow:inset 0 0 0 2px #b07a42,0 8px 20px rgba(0,0,0,.5)}
+#achToast.show{opacity:1;transform:translate(-50%,0)}
+#achToast b{font-family:var(--font-d);font-weight:400;font-size:17px;letter-spacing:.08em;color:#ffd24a}
+#achToast span{font-size:13px;font-weight:800}
+.tabs{display:flex;gap:6px;width:100%}
+.tabs button{flex:1;padding:8px 4px;border-radius:10px;border:2px solid #1e1006;background:#3b2a1a;font-family:var(--font-d);font-size:15px;letter-spacing:.05em;cursor:pointer;color:#fff}
+.tabs button[aria-selected="true"]{background:linear-gradient(#ffd56a,#ff9a1c);color:#3a1a00}
+.list{display:flex;flex-direction:column;gap:7px;width:100%;max-height:min(48vh,440px);overflow:auto}
+#oGoals{max-height:none}
+.row{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.28)}
+.row.small{padding:6px 10px}.row.small b{font-size:14px}
+.row.ok{background:rgba(70,200,60,.22)}
+.row.claimed{opacity:.6}
+.row svg.ic{width:30px;height:30px;color:#ffc531}
+.row b{display:block;font-family:var(--font-d);font-weight:400;font-size:16px;letter-spacing:.03em}
+.row small{display:block;font-size:12px;color:var(--muted);line-height:1.3}
+.row small.ready{color:#9be38a}
+.pips{display:flex;gap:3px;margin-top:5px}.pips i{width:16px;height:6px;border-radius:3px;background:#1d1006}.pips i.on{background:#ffc531}
+.prog{height:6px;border-radius:4px;background:#1d1006;margin-top:5px;overflow:hidden}.prog i{display:block;height:100%;background:linear-gradient(#8ef05a,#2fa53a)}
+.buy{display:flex;align-items:center;gap:5px;padding:7px 10px;border-radius:10px;border:2px solid #0b4a0f;background:linear-gradient(#94f35d,#2fa53a);font-family:var(--font-d);font-size:15px;cursor:pointer;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.4);white-space:nowrap}
+.buy[disabled]{background:#4a3a2a;border-color:#1e1006;color:#bfa98a;cursor:not-allowed;text-shadow:none}
+.buy.claim{background:linear-gradient(#ffd56a,#ff9a1c);border-color:#7a3a00;color:#3a1a00;text-shadow:none}
+.buy .coin-ic,.reward .coin-ic,.req .coin-ic,.btn .coin-ic,.earned .coin-ic{width:16px;height:16px;vertical-align:-3px;margin-right:3px}
+.reward{font-family:var(--font-d);font-size:14px;color:#ffe08a;white-space:nowrap}
+.tag-done{font-family:var(--font-d);font-size:14px;color:#7dff6a}
+.round-btn span{position:relative}
+.badge{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:var(--blood);border:2px solid #fff}
+.round-row{gap:12px}
+.lock-chip{display:flex;align-items:center;gap:6px;font-weight:900;font-size:13px;color:#ffcf9a}
+.lock-chip svg{width:16px;height:16px}
+.btn-locked{background:linear-gradient(#ffd56a,#ff9a1c 50%,#d86a08);border-color:#5a2a00;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 #5a2a00,0 12px 20px rgba(0,0,0,.45);color:#3a1a00;text-shadow:none}
+.card .req{top:auto;bottom:34px;font-family:var(--font-d);font-size:14px}
+.reason{font-family:var(--font-d);font-size:18px;letter-spacing:.05em;color:#ffe08a;text-shadow:0 2px 0 #000;margin-top:-6px}
+.earned{font-family:var(--font-d);font-size:18px;color:#ffe08a}
+#turnHint{position:absolute;left:50%;top:30%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:8px 14px;border-radius:18px;background:rgba(20,10,4,.55);font-family:var(--font-d);font-size:20px;letter-spacing:.06em;color:#fff;text-shadow:0 2px 0 #000;white-space:nowrap}
+#turnHint .ta{width:44px;height:64px;animation:pulseA .6s ease-in-out infinite alternate}
+#turnHint .r{animation-delay:.3s}
+#turnHint[data-dir="-1"] .r,#turnHint[data-dir="1"] .l{opacity:.25;animation:none}
+#turnHint[data-dir="-1"] .l,#turnHint[data-dir="1"] .r{animation:none;transform:scale(1.25);filter:drop-shadow(0 0 10px #ffd24a)}
+@keyframes pulseA{from{transform:scale(.9)}to{transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){#hint .hand{animation:none}.btn,.switch::after{transition:none}}
+@media (min-height:760px){.btn{padding:15px 18px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="flash" class="flash"></div>
+<div id="vig"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 001.5.9l12-7.5a1 1 0 000-1.8l-12-7.5A1 1 0 007 4.5z" fill="currentColor"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 000-2l2.1-1.6-2-3.5-2.5 1a7.7 7.7 0 00-1.7-1L15 3.3h-4l-.4 2.6a7.7 7.7 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.7 7.7 0 001.7 1l.4 2.6h4l.4-2.6a7.7 7.7 0 001.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l9.5 8.4-1.3 1.5L19 11.8V20h-5v-6h-4v6H5v-8.2l-1.2 1.1-1.3-1.5z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path fill="currentColor" d="M10.5 5L3.5 12l7 7v-4.5H20v-5h-9.5z"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10v2h4v3a4 4 0 01-4 4h-.4A5 5 0 0113 15v3h3v3H8v-3h3v-3a5 5 0 01-3.6-3H7a4 4 0 01-4-4V5h4zm0 4H5v1a2 2 0 002 2zm10 0v3a2 2 0 002-2V7z"/></symbol>
+    <symbol id="i-foot" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c-3 0-5-2-5-4.5 0-2 1.6-3.4 2.6-4.6L5 6.5l1.6-1.2 4.4 5.2V2h2v8.5l4.4-5.2L19 6.5l-4.6 6.4c1 1.2 2.6 2.6 2.6 4.6C17 20 15 22 12 22z"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5.5l5.5-2 7 2.5L21 4v14.5l-5.5 2-7-2.5L3 20zm6 .2v10.6l6 2.1V7.8z"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 110 20 10 10 0 010-20zm-.1 14.2a1.4 1.4 0 100 2.8 1.4 1.4 0 000-2.8zM12 5.5c-2.3 0-3.9 1.4-4 3.6h2.4c.1-.9.7-1.5 1.6-1.5s1.5.6 1.5 1.3c0 .7-.4 1.1-1.3 1.7-1.1.7-1.6 1.5-1.5 2.9v.6h2.3v-.5c0-.8.3-1.2 1.3-1.8 1.1-.7 1.8-1.6 1.8-3C16.1 6.8 14.4 5.5 12 5.5z"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path fill="currentColor" d="M2 3h3.2l.8 3H21l-2.4 8.5a1.5 1.5 0 01-1.4 1H8.6a1.5 1.5 0 01-1.4-1.1L4.6 5H2zm7 15a2 2 0 110 4 2 2 0 010-4zm8 0a2 2 0 110 4 2 2 0 010-4z"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#e3342a"/><circle cx="12" cy="12" r="7" fill="#fff4dc"/><circle cx="12" cy="12" r="4" fill="#e3342a"/><circle cx="12" cy="12" r="1.6" fill="#fff4dc"/></symbol>
+    <symbol id="i-trex" viewBox="0 0 24 24"><path fill="#ff4a2a" stroke="#3a0a05" stroke-width="1" d="M3 10.5C3 6.5 6.5 4 11 4h4c3.5 0 6 2 6 4.5V10h-2l-1 1.2-1-1.2-1 1.2-1-1.2h-2.5c-.6 0-1 .5-1 1v1.5h9V15c0 2.5-2.5 4.5-6 4.5H8.5L6 21v-3.2C4.2 16.5 3 13.8 3 10.5z"/><circle cx="9" cy="8" r="1.4" fill="#ffe14a"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10V7a5 5 0 0110 0v3h1.5A1.5 1.5 0 0120 11.5v9a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 20.5v-9A1.5 1.5 0 015.5 10zm2.5 0h5V7a2.5 2.5 0 00-5 0z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="#ff2d3d" stroke="#7a0010" stroke-width="1.2" d="M12 21s-7.6-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.7 3.7 4.2 7.2C19.6 16.4 12 21 12 21z"/><path fill="#fff" opacity=".55" d="M6.2 7.2c-1.3.3-2 1.4-2 2.6.9-1 1.9-1.6 3.2-1.8-.2-.5-.6-.8-1.2-.8z"/></symbol>
+    <symbol id="i-run" viewBox="0 0 24 24"><path fill="#ffd24a" d="M4 19h16v2H4zm1.5-3.5l3-7 2.4 1.7L13 6l2.2 1.2-2.6 5.4-2.4-1.7-2.6 5.6zM16 4.5l4.5 1-1 4.5-1.6-.4.6-2.8-2.8-.6z"/></symbol>
+    <symbol id="i-magnet" viewBox="0 0 24 24"><path fill="#ff3a3a" stroke="#5a0000" stroke-width="1" d="M5 3h5v8a2 2 0 004 0V3h5v8a7 7 0 01-14 0z"/><path fill="#e9eef2" d="M5 3h5v3.2H5zm9 0h5v3.2h-5z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path fill="#4ab8ff" stroke="#0a3a80" stroke-width="1" d="M14 1.5L4 13.5h6.3L8.6 22.5 20 9.8h-6.6z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path fill="#3ad65a" stroke="#0a5a1a" stroke-width="1" d="M12 2l8.5 3.2v6.2c0 5.2-3.6 9.3-8.5 10.9-4.9-1.6-8.5-5.7-8.5-10.9V5.2z"/><path fill="#fff" opacity=".4" d="M12 4.4v15.4C8.3 18.3 5.8 15 5.8 11.3V6.7z"/></symbol>
+    <symbol id="i-egg" viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="7" ry="9" fill="#f6c437" stroke="#7a4b00" stroke-width="1"/><circle cx="9" cy="11" r="1.6" fill="#8a5410"/><circle cx="14.5" cy="9" r="1.2" fill="#8a5410"/><circle cx="14" cy="15.5" r="1.8" fill="#8a5410"/><circle cx="9.5" cy="17" r="1" fill="#8a5410"/></symbol>
+    <symbol id="i-arrowL" viewBox="0 0 40 60"><path d="M30 4L6 30l24 26z" fill="#ffc531" stroke="#3a1f05" stroke-width="4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrowR" viewBox="0 0 40 60"><path d="M10 4l24 26-24 26z" fill="#ffc531" stroke="#3a1f05" stroke-width="4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path fill="#fff" stroke="#222" stroke-width=".8" d="M9 11V4.5a1.5 1.5 0 013 0V10l.1-1.5a1.5 1.5 0 013 .1V11a1.5 1.5 0 013 .3v.7a1.5 1.5 0 013 .5V16c0 3.3-2.7 6-6 6h-1.2a6 6 0 01-4.6-2.2l-3.6-4.4a1.6 1.6 0 012.3-2.2z"/></symbol>
+  </defs>
+</svg>
+
+<!-- Loading / splash -->
+<section id="loading" class="screen">
+  <div class="leaves-bg"></div>
+  <div class="logo"><div class="logo-board"><b class="lt l1" data-t="DIANO"><span>DIANO</span></b><b class="lt l2" data-t="RACER"><span>RACER</span></b><div class="claw"><i></i><i></i><i></i></div></div><div class="logo-tag">RUN · SURVIVE · EXPLORE</div></div>
+  <div class="stack" style="gap:8px;margin-top:20px">
+    <div class="loadbar"><i id="loadFill"></i></div>
+    <div id="loadText">LOADING...</div>
+    <div id="loadSub">Growing the jungle</div>
+  </div>
+  <div class="tagline">JUNGLE NEVER ENDS</div>
+</section>
+
+<!-- Main menu -->
+<section id="menu" class="screen dim" hidden>
+  <div class="menu-top">
+    <button class="icon-btn" id="mSettings" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+    <div class="wallet"><i class="coin-ic"></i><span id="walletCoins" class="wallet-n">0</span></div>
+  </div>
+  <div class="menu-center">
+    <div class="logo small"><div class="logo-board"><b class="lt l1" data-t="DIANO"><span>DIANO</span></b><b class="lt l2" data-t="RACER"><span>RACER</span></b><div class="claw"><i></i><i></i><i></i></div></div><div class="logo-tag">RUN · SURVIVE · EXPLORE</div></div>
+  </div>
+  <div class="menu-buttons">
+    <div class="best-chip" id="menuBest">BEST 0</div>
+    <button class="btn btn-green btn-big" id="mPlay"><svg width="30" height="30"><use href="#i-play"/></svg>PLAY</button>
+    <button class="btn btn-wood" id="mHow">HOW TO PLAY</button>
+    <button class="btn btn-wood" id="mScores">HIGH SCORE</button>
+    <div class="round-row">
+      <button class="round-btn" id="mDino"><span><svg><use href="#i-foot"/></svg></span>DINO</button>
+      <button class="round-btn" id="mJourney"><span><svg><use href="#i-map"/></svg></span>JOURNEY</button>
+      <button class="round-btn" id="mShop"><span><svg><use href="#i-cart"/></svg></span>SHOP</button>
+      <button class="round-btn" id="mAwards"><span><svg><use href="#i-trophy"/></svg><em class="badge" id="awardBadge" hidden></em></span>AWARDS</button>
+    </div>
+  </div>
+</section>
+
+<!-- Character select -->
+<section id="charSel" class="screen" hidden>
+  <div class="sel-head"><button class="icon-btn" id="cBack" aria-label="Back"><svg><use href="#i-back"/></svg></button><h2>CHOOSE YOUR DINO</h2><div class="wallet" style="margin-left:auto"><i class="coin-ic"></i><span class="wallet-n">0</span></div></div>
+  <div class="sel-mid">
+    <button class="arrow" id="cPrev" aria-label="Previous dino"><svg><use href="#i-arrowL"/></svg></button>
+    <button class="arrow" id="cNext" aria-label="Next dino"><svg><use href="#i-arrowR"/></svg></button>
+  </div>
+  <div class="sel-card panel" style="padding:16px 18px">
+    <div class="name-plate" id="cName">DIANO</div>
+    <div class="lock-chip" id="cLock" hidden><svg><use href="#i-lock"/></svg>LOCKED · unlock with coins</div>
+    <div class="sel-desc" id="cDesc"></div>
+    <div class="stat-row"><span>SPEED</span><div class="bar"><i id="cSpeed"></i></div></div>
+    <div class="stat-row"><span>JUMP</span><div class="bar"><i id="cJump"></i></div></div>
+    <div class="stat-row"><span>SHIELD</span><div class="bar"><i id="cShield"></i></div></div>
+    <button class="btn btn-green" id="cSelect">SELECT</button>
+    <div class="dots" id="cDots"><i></i><i></i><i></i></div>
+  </div>
+</section>
+
+<!-- Journey select -->
+<section id="journey" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">CHOOSE YOUR JOURNEY</div>
+    <div class="panel stack" style="width:min(440px,94vw)">
+      <div class="cards" id="cards"></div>
+      <div class="wallet"><i class="coin-ic"></i><span class="wallet-n">0</span></div>
+      <div class="note">Unlock a road with coins to start your runs there. Every run still loops through all five areas.</div>
+      <button class="btn btn-wood" id="jBack">BACK</button>
+    </div>
+  </div>
+</section>
+
+<!-- How to play -->
+<section id="how" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">HOW TO PLAY</div>
+    <div class="panel stack">
+      <div class="how-list">
+        <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3l7 8h-4.5v10h-5V11H5z"/></svg><div><b>Swipe Up</b><span>Jump over logs, spikes and bones</span></div></div>
+        <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 21l-7-8h4.5V3h5v10H19z"/></svg><div><b>Swipe Down</b><span>Slide under gates and branches</span></div></div>
+        <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M2 12l6-6v4h8V6l6 6-6 6v-4H8v4z"/></svg><div><b>Swipe Left / Right</b><span>Change lane to dodge rocks and walls. At a junction, swipe to turn onto the new road.</span></div></div>
+        <div class="how-item"><i class="coin-ic" style="width:34px;height:34px"></i><div><b>Collect Coins</b><span>Each coin adds 20 to your score</span></div></div>
+        <div class="how-item"><svg><use href="#i-heart"/></svg><div><b>Use Power-Ups</b><span>Magnet, Speed Boost, Shield, Extra Life and the rare Golden Egg</span></div></div>
+        <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M7 7h10a5 5 0 015 5v3a3 3 0 01-5.2 2L15 15H9l-1.8 2A3 3 0 012 15v-3a5 5 0 015-5zm0 3v1.5H5.5V13H7v1.5h1.5V13H10v-1.5H8.5V10zm9.5 0a1 1 0 100 2 1 1 0 000-2zm-2 2a1 1 0 100 2 1 1 0 000-2z"/></svg><div><b>Controller &amp; Keyboard</b><span>D-pad or stick to move, A jump, B slide, Start pause. Arrows/WASD + Space on keyboard.</span></div></div>
+      </div>
+      <button class="btn btn-green" id="hOk">GOT IT!</button>
+    </div>
+  </div>
+</section>
+
+<!-- High scores -->
+<section id="scores" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">HIGH SCORE</div>
+    <div class="panel stack">
+      <table class="score-table"><tbody id="scoreRows"></tbody></table>
+      <button class="btn btn-wood" id="sBack">BACK</button>
+    </div>
+  </div>
+</section>
+
+<!-- Settings -->
+<section id="settings" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">SETTINGS</div>
+    <div class="panel stack">
+      <div class="toggle-row">MUSIC<button class="switch" id="tMusic" role="switch" aria-label="Music"></button></div>
+      <div class="toggle-row">SOUND FX<button class="switch" id="tSfx" role="switch" aria-label="Sound effects"></button></div>
+      <div class="toggle-row">VIBRATION<button class="switch" id="tVibe" role="switch" aria-label="Vibration"></button></div>
+      <div class="toggle-row">GRAPHICS<div class="seg" id="tQuality"><button data-q="low">FAST</button><button data-q="high">HD</button></div></div>
+      <button class="btn btn-wood" id="setBack">BACK</button>
+    </div>
+  </div>
+</section>
+
+<!-- HUD -->
+<div id="hud" hidden>
+  <div class="hud-top">
+    <button class="icon-btn" id="btnPause" aria-label="Pause"><svg><use href="#i-pause"/></svg></button>
+    <div class="hud-mid"><div class="hud-score" id="hScore">0</div>
+      <div class="danger" id="danger" hidden><svg><use href="#i-trex"/></svg><div class="dbar"><i id="dFill"></i></div></div></div>
+    <div class="hud-stats">
+      <div class="stat"><i class="coin-ic"></i><b id="hCoins">0</b></div>
+      <div class="stat"><svg><use href="#i-run"/></svg><b id="hDist">0 m</b></div>
+      <div class="stat"><svg><use href="#i-heart"/></svg><b id="hLives">2</b></div>
+    </div>
+  </div>
+  <div id="zoneToast"></div>
+  <div id="achToast"></div>
+  <div id="turnHint" hidden><svg class="ta l"><use href="#i-arrowL"/></svg><b>SWIPE TO TURN</b><svg class="ta r"><use href="#i-arrowR"/></svg></div>
+  <div id="hint" hidden><svg class="hand"><use href="#i-hand"/></svg><div>SWIPE TO MOVE<br><small style="font-size:13px">UP = JUMP · DOWN = SLIDE</small></div></div>
+  <div class="hud-bottom">
+    <div class="pw" id="pwMagnet" style="--c:#ff3a3a" hidden><svg><use href="#i-magnet"/></svg><b></b></div>
+    <div class="pw" id="pwBoost" style="--c:#36a8ff" hidden><svg><use href="#i-bolt"/></svg><b></b></div>
+    <div class="pw" id="pwShield" style="--c:#36d65a" hidden><svg><use href="#i-shield"/></svg><b></b></div>
+  </div>
+  <div class="egg-chip" style="right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 14px)"><svg width="20" height="20"><use href="#i-egg"/></svg><span id="hEggs">0/5</span></div>
+</div>
+
+<!-- Shop -->
+<section id="shop" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">SHOP</div>
+    <div class="panel stack" style="width:min(420px,94vw)">
+      <div class="wallet"><i class="coin-ic"></i><span class="wallet-n">0</span></div>
+      <div class="tabs" id="shopTabs" role="tablist"><button data-tab="upg" role="tab">UPGRADES</button><button data-tab="boost" role="tab">BOOSTERS</button></div>
+      <div class="list" id="shopList"></div>
+      <div class="note">Unlock new dinos in DINO and new roads in JOURNEY.</div>
+      <button class="btn btn-wood" id="shopBack">BACK</button>
+    </div>
+  </div>
+</section>
+
+<!-- Awards -->
+<section id="awards" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">AWARDS</div>
+    <div class="panel stack" style="width:min(420px,94vw)">
+      <div class="wallet"><i class="coin-ic"></i><span class="wallet-n">0</span></div>
+      <div class="tabs" id="awardTabs" role="tablist"><button data-tab="goals" role="tab">GOALS</button><button data-tab="ach" role="tab">ACHIEVEMENTS</button></div>
+      <div class="list" id="awardList"></div>
+      <button class="btn btn-wood" id="awBack">BACK</button>
+    </div>
+  </div>
+</section>
+
+<!-- Pause -->
+<section id="pause" class="screen dim-strong" hidden>
+  <div class="panel-wrap"><div class="panel-title">PAUSED</div>
+    <div class="panel stack">
+      <button class="btn btn-green" id="pResume">RESUME</button>
+      <button class="btn btn-wood" id="pRestart">RESTART</button>
+      <button class="btn btn-wood" id="pSettings">SETTINGS</button>
+      <button class="btn btn-wood" id="pMenu">MAIN MENU</button>
+    </div>
+  </div>
+</section>
+
+<!-- Game over -->
+<section id="over" class="screen dim-strong" hidden>
+  <div class="over-title">GAME OVER</div>
+  <div class="reason" id="oReason"></div>
+  <div class="panel stack" style="padding:16px 18px">
+    <div id="newBest" class="new-best" hidden>NEW BEST!</div>
+    <div class="lbl">SCORE</div><div class="big-num" id="oScore">0</div>
+    <div class="lbl">BEST</div><div class="big-num" style="font-size:30px" id="oBest">0</div>
+    <div class="mini-stats"><div><i class="coin-ic"></i><span id="oCoins">0</span><small>COINS</small></div><div><span id="oDist">0 m</span><small>DISTANCE</small></div><div><span id="oEggs">0</span><small>EGGS</small></div></div>
+    <div class="earned" id="oEarned"></div>
+    <div class="list" id="oGoals"></div>
+    <div class="btn-row"><button class="btn btn-green" id="oRetry">RETRY</button><button class="btn btn-wood" id="oHome">HOME</button></div>
+    <button class="btn btn-blue" id="oShop" style="font-size:19px;padding:10px">SHOP &amp; UPGRADES</button>
+    <div class="quote" id="oQuote">"EVERY FALL MAKES YOU STRONGER!"</div>
+  </div>
+</section>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="game.js"></script>
+<script>if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
+</body>
+</html>

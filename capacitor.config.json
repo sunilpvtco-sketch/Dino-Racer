@@ -1,0 +1,6 @@
+{
+  "appId": "com.dianoracer.game",
+  "appName": "Diano Racer",
+  "webDir": "www",
+  "android": { "backgroundColor": "#07130b" }
+}
