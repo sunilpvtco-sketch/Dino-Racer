@@ -475,10 +475,18 @@ const SKINS = [
   { name: 'RUSTY', desc: 'The fastest legs in the valley, but a shorter hop.', stats: [4, 2, 3], base: '#9a6a3c', dorsal: '#5a3518', dark: 'rgba(70,38,14,.45)', light: 'rgba(210,160,100,.25)', belly: '#ead0a4', stripe: 'rgba(120,40,18,.75)', spine: '#b84a1c', spike: 0xc2501e, claw: 0x20120c, eye: 0xe0a428 },
   { name: 'FROST', desc: 'Light as snow. Jumps highest, power-ups last longer.', stats: [2, 4, 4], base: '#c9cbc2', dorsal: '#8c8e88', dark: 'rgba(95,95,92,.4)', light: 'rgba(255,255,250,.35)', belly: '#f3eee0', stripe: 'rgba(90,92,92,.6)', spine: '#a85a36', spike: 0xb86a44, claw: 0x262626, eye: 0x7ec8e8 }
 ];
+SKINS[0].model = 'raptor'; SKINS[0].pal = { body: 0x5b8a2e, dark: 0x22341a, belly: 0xd8c08a, eye: 0xffb020 };
+SKINS[1].model = 'raptor'; SKINS[1].pal = { body: 0x9a5426, dark: 0x2c170a, belly: 0xe2b27c, eye: 0xffc030 };
+SKINS[2].model = 'raptor'; SKINS[2].pal = { body: 0xd6d6ce, dark: 0x5e605c, belly: 0xf4efe2, eye: 0x58c8ff };
+SKINS.push(
+  { ...SKINS[0], name: 'TRIKE', desc: 'A three-horned tank. Slow, but shields and boosts last ages.', stats: [2, 2, 5], model: 'trike', pal: { body: 0x6e7a3e, dark: 0x8a3a1e, belly: 0xd2c08e } },
+  { ...SKINS[0], name: 'REX', desc: 'A young T-Rex. The fastest runner in the jungle.', stats: [5, 2, 3], model: 'trex', pal: { body: 0x3f6a2a, dark: 0x22361a, belly: 0xd8c48e, eye: 0xffb020, claw: 0x1a140e, mouth: 0x8a1c1c } }
+);
 const VILLAIN = { base: '#3b342c', dorsal: '#1a1512', dark: 'rgba(18,14,10,.55)', light: 'rgba(130,110,85,.22)', belly: '#a39074', stripe: 'rgba(105,24,16,.8)', spine: '#4a140c', spike: 0x2a211b, claw: 0x0e0b09, eye: 0xff3214 };
-const SKIN_PRICE = [0, 5000, 5000];
+const SKIN_PRICE = [0, 5000, 5000, 5000, 5000];
 const skinCache = {};
 function skinTextures(key, pal) {
+  if (typeof key === 'number' && key > 2) key = 0, pal = SKINS[0];
   if (!skinCache[key]) { const s = genSkin(pal), l = genLimb(pal); skinCache[key] = { map: s.map, part: s.part, bump: s.bump, limb: l.map, limbBump: l.bump }; }
   return skinCache[key];
 }
@@ -551,6 +559,7 @@ function buildMaterials() {
   MAT.coinEdge = std({ color: 0xe8a510, metalness: 0.9, roughness: 0.25, emissive: 0x3a2000 });
   MAT.signs = {};
   const signTxt = { jungle: ['JUNGLE PATH', 'RUN!'], waterfall: ['WATERFALL', 'AREA'], ruins: ['ANCIENT', 'RUINS'], bridge: ['WOODEN', 'BRIDGE'], cave: ['DANGER', 'CAVE AHEAD'] };
+  signTxt.turn = ['<  TURN  >', 'LEFT OR RIGHT'];
   for (const k in signTxt) MAT.signs[k] = std({ map: genSign(signTxt[k], { color: k === 'cave' ? '#ff5a3a' : '#ffcf4a' }), roughness: 0.85 });
 }
 
@@ -743,7 +752,7 @@ function statue(g, x, z) {
   for (const s of [-1, 1]) { g.add(M(G.sph, MAT.crystal, x + f * 0.55, 3.18, z - 0.1 + s * 0.22, 0.06, 0.06, 0.06)); g.add(M(G.box, MAT.statue, x - f * 0.1, 1.2, z + s * 0.42, 0.45, 0.9, 0.3)); }
   g.add(M(pick(G.rocks), MAT.moss, x, 3.35, z - 0.1, 0.4, 0.12, 0.4));
 }
-function cliff(g, x, z, h, w) { for (let i = 0; i < 3; i++) { const r = M(pick(G.rocks), MAT.cliff, x + R(-1, 1), h * R(0.35, 0.55), z + R(-4, 4), w * R(0.8, 1.2), h * R(0.5, 0.7), R(4, 7), 0, R(0, 3), 0); r.castShadow = false; g.add(r); } g.add(M(pick(G.blobs), pick(MAT.canopy), x, h * 0.95, z, w * 0.8, 1.2, 5)); }
+function cliff(g, x, z, h, w) { for (let i = 0; i < 3; i++) { const r = M(pick(G.rocks), MAT.cliff, x + R(-1, 1), h * R(0.35, 0.55), z + R(-4, 4), w * R(0.8, 1.2), h * R(0.5, 0.7), R(4, 7), 0, R(0, 3), 0); r.castShadow = false; g.add(r); } g.add(M(pick(G.blobs), pick(MAT.canopy), x, h * 0.95, z, w * 0.8, 1.2, 5)); if (TREES.pine) for (let i = 0; i < 2; i++) placeParts(g, TREES.pine, x + R(-3, 3), h * 0.9, z + R(-4, 4), R(6, 9), R(0, 6), false); }
 
 /* ------------------------------------------------------------ zones */
 const ZONES = ['jungle', 'waterfall', 'ruins', 'bridge', 'cave'];
@@ -806,6 +815,7 @@ function buildChunk(zone) {
         for (let k = 0; k < RI(3, 6); k++) { const h = R(0.5, 1.6); g.add(M(G.octa, MAT.crystal, x + R(-0.4, 0.4), h * 0.6, z + R(-0.5, 0.5), R(0.15, 0.3), h, R(0.15, 0.3), R(-0.3, 0.3), R(0, 3), s * R(0.1, 0.5))); }
       }
       for (let i = 0; i < 5; i++) rock(g, s * R(4.1, 6), -R(0, 24), R(0.4, 1.0));
+      if (Math.random() < 0.6) prop(g, 'crystal_rock', s * R(5, 6.5), -R(2, 22), R(1.2, 2));
       torch(g, s * 4.4, -R(4, 20), 0, true);
     }
     for (let i = 0; i < 8; i++) { const x = R(-5, 5), z = -R(1, 23), l = R(0.6, 1.8), y = Math.sqrt(Math.max(0, 7.2 * 7.2 - x * x)); g.add(M(G.cone, MAT.caveWall, x, y - l / 2, z, R(0.18, 0.35), l, R(0.18, 0.35), PI, 0, 0)); }
@@ -836,8 +846,11 @@ function buildChunk(zone) {
       if (Math.random() < 0.7) fence(g, s);
       for (let i = 0; i < 7; i++) { const x = s * R(4.3, 7), z = -R(0, 24); const r = Math.random(); r < 0.35 ? fern(g, x, z) : r < 0.6 ? grass(g, x, z) : r < 0.8 ? bush(g, x, z) : banana(g, x, z); }
       for (let i = 0; i < 6; i++) grass(g, s * R(3.9, 4.6), -R(0, 24), R(0.5, 0.9));
-      for (let i = 0; i < 3; i++) { const x = s * R(7.5, 12), z = -R(0, 24); Math.random() < 0.5 ? palm(g, x, z) : bigTree(g, x, z); }
-      for (let i = 0; i < 4; i++) { const x = s * R(13, 32), z = -R(0, 24); Math.random() < 0.35 ? palm(g, x, z, R(8, 11)) : bigTree(g, x, z, R(1.2, 1.8)); }
+      for (let i = 0; i < 3; i++) { const x = s * R(7, 11), z = -R(0, 24); Math.random() < 0.4 ? palm(g, x, z) : tree(g, x, z, R(0.8, 1.05)); }
+      for (let i = 0; i < 3; i++) { const x = s * R(13, 30), z = -R(0, 24); Math.random() < 0.25 ? palm(g, x, z, R(8, 11)) : tree(g, x, z, R(1.0, 1.4)); }
+      if (TREES.bush) for (let i = 0; i < 2; i++) placeParts(g, TREES.bush, s * R(5.5, 9), 0, -R(0, 24), R(2.2, 3.2));
+      if (Math.random() < 0.5) prop(g, pick(['stump', 'log', 'rock_large', 'mushroom_red']), s * R(4.6, 7), -R(1, 23), R(0.5, 0.9));
+      for (let i = 0; i < 2; i++) prop(g, 'flower_red', s * R(4.3, 6), -R(0, 24), R(0.35, 0.55));
       for (let i = 0; i < 2; i++) banana(g, s * R(7, 11), -R(0, 24), R(1, 1.4));
       if (Math.random() < 0.6) rock(g, s * R(4.6, 9), -R(0, 24), R(0.5, 1.3));
       if (Math.random() < 0.25) torch(g, s * 4.3, -R(3, 21));
@@ -846,7 +859,8 @@ function buildChunk(zone) {
       if (Math.random() < 0.5) statue(g, s * 7.2, -R(4, 20));
       for (let i = 0; i < 3; i++) { const x = s * R(6, 10), z = -R(0, 24); g.add(M(G.box, MAT.stone, x, 0.4, z, R(1, 3), R(0.6, 1.6), R(0.8, 1.4), 0, R(-0.2, 0.2), 0)); }
       for (let i = 0; i < 5; i++) { const x = s * R(4.3, 8), z = -R(0, 24); Math.random() < 0.5 ? fern(g, x, z) : grass(g, x, z); }
-      for (let i = 0; i < 4; i++) { const x = s * R(11, 30), z = -R(0, 24); Math.random() < 0.5 ? bigTree(g, x, z, R(1.1, 1.6)) : palm(g, x, z); }
+      for (let i = 0; i < 4; i++) { const x = s * R(11, 30), z = -R(0, 24); Math.random() < 0.65 ? tree(g, x, z, R(1.0, 1.4)) : palm(g, x, z); }
+      if (Math.random() < 0.6) prop(g, pick(['column', 'column_broken']), s * R(6, 9), -R(2, 22), R(2.5, 4));
       if (Math.random() < 0.6) { pillar(g, s * R(9, 14), -R(4, 20), R(6, 9)); }
       torch(g, s * 4.15, -10);
     }
@@ -1131,38 +1145,44 @@ function setSkin(i) {
 }
 
 
-/* ------------------------------------------------------------ rigged glTF dinosaur (Quaternius, public domain) */
-const MODEL_PAL = [
-  { body: 0x5b8a2e, dark: 0x22341a, belly: 0xd8c08a, eye: 0xffb020 },
-  { body: 0x9a5426, dark: 0x2c170a, belly: 0xe2b27c, eye: 0xffc030 },
-  { body: 0xd6d6ce, dark: 0x5e605c, belly: 0xf4efe2, eye: 0x58c8ff }
-];
-const VILLAIN_PAL = { body: 0x3b302a, dark: 0x0d0b0a, belly: 0x7c2216, eye: 0xff2a10 };
-const MODEL_URL = window.DIANO_MODEL || 'models/velociraptor.gltf';
+/* ------------------------------------------------------------ rigged glTF dinosaurs (Quaternius, public domain) */
+// per model: file, which material plays which role, and the height we want in metres
+const DINO_MODELS = {
+  raptor: { url: 'models/velociraptor.json', roles: { Brown: 'body', Black: 'dark', LightBrown: 'belly', Eyes: 'eye' }, h: 1.9 },
+  trex: { url: 'models/trex.json', roles: { Green: 'body', LightGreen: 'dark', LightYellow: 'belly', Black: 'claw', Red: 'mouth' }, h: 2.5 },
+  trike: { url: 'models/triceratops.json', roles: { Brown: 'body', Purple: 'dark', LightBrown: 'belly' }, h: 1.9 }
+};
+const VILLAIN_PAL = { body: 0x34291f, dark: 0x6b1a10, belly: 0x8a6e52, eye: 0xff2a10, claw: 0x0b0908, mouth: 0x8a0c0c };
 function loadGLTF(url) { return new Promise((res, rej) => new THREE.GLTFLoader().load(url, res, undefined, rej)); }
 const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
-function attachModel(rig, gltf, pal, opts = {}) {
-  const m = gltf.scene, mats = {
-    body: new THREE.MeshStandardMaterial({ color: lin(pal.body), roughness: 0.62, metalness: 0 }),
-    dark: new THREE.MeshStandardMaterial({ color: lin(pal.dark), roughness: 0.55, metalness: 0 }),
-    belly: new THREE.MeshStandardMaterial({ color: lin(pal.belly), roughness: 0.7, metalness: 0 }),
-    eye: new THREE.MeshStandardMaterial({ color: lin(pal.eye), emissive: lin(pal.eye), emissiveIntensity: opts.trex ? 1.2 : 0.35, roughness: 0.15 })
-  };
-  for (const k in mats) mats[k].envMapIntensity = 0.35;
-  const map = { Brown: 'body', Black: 'dark', LightBrown: 'belly', Eyes: 'eye' };
-  m.traverse((o) => { if (o.isMesh) { o.material = mats[map[o.material.name] || 'body']; o.castShadow = true; o.frustumCulled = false; } });
-  m.rotation.y = PI;
-  m.scale.setScalar(opts.scale || 0.4);
+function makeInstance(gltf, key, pal, height, rootScale, emissiveEyes) {
+  const spec = DINO_MODELS[key], m = gltf.scene;
+  const mk2 = (c, r = 0.62) => { const x = new THREE.MeshStandardMaterial({ color: lin(c), roughness: r, metalness: 0 }); x.envMapIntensity = 0.35; return x; };
+  const mats = { body: mk2(pal.body), dark: mk2(pal.dark, 0.55), belly: mk2(pal.belly, 0.7), eye: mk2(pal.eye, 0.15), claw: mk2(pal.claw || 0x151210, 0.35), mouth: mk2(pal.mouth || 0x7a1a1a, 0.4) };
+  mats.eye.emissive = lin(pal.eye); mats.eye.emissiveIntensity = emissiveEyes ? 1.2 : 0.3;
+  m.traverse((o) => { if (o.isMesh) { o.material = mats[spec.roles[o.material.name] || 'body']; o.castShadow = true; o.frustumCulled = false; } });
+  // face -z and stand on the ground at the wanted height, whatever the source orientation was
+  m.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(m), c = box.getCenter(new THREE.Vector3());
+  const head = m.getObjectByName('Head'); const hp = head ? head.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 0, 1);
+  const dx = hp.x - c.x, dz = hp.z - c.z;
+  const pivot = new THREE.Group(); pivot.add(m);
+  pivot.rotation.y = PI - Math.atan2(dx, dz);
+  const s = height / ((box.max.y - box.min.y) * rootScale);
+  pivot.scale.setScalar(s);
+  m.position.set(-c.x, -box.min.y, -c.z);
+  const inst = { model: pivot, inner: m, mats, mixer: new THREE.AnimationMixer(m), actions: {}, anim: null, key, baseScale: s };
+  for (const clip of gltf.animations) inst.actions[clip.name.replace(/^.*[_|]/, '')] = inst.mixer.clipAction(clip);
+  for (const k of ['Jump', 'Death', 'Attack']) if (inst.actions[k]) { inst.actions[k].setLoop(THREE.LoopOnce, 1); inst.actions[k].clampWhenFinished = true; }
+  return inst;
+}
+function useInstance(rig, inst) {
+  if (rig.model && rig.model !== inst.model) rig.model.visible = false;
+  if (!inst.model.parent) rig.root.add(inst.model);
+  inst.model.visible = true;
   rig.body.visible = false;
-  rig.root.add(m);
-  rig.model = m; rig.mmats = mats;
-  rig.mixer = new THREE.AnimationMixer(m);
-  rig.actions = {};
-  for (const clip of gltf.animations) rig.actions[clip.name.replace(/^.*_/, '')] = rig.mixer.clipAction(clip);
-  for (const k of ['Jump', 'Death', 'Attack']) if (rig.actions[k]) { rig.actions[k].setLoop(THREE.LoopOnce, 1); rig.actions[k].clampWhenFinished = true; }
-  rig.bones = { head: m.getObjectByName('Head'), neck: m.getObjectByName('Neck'), armL: m.getObjectByName('FrontUpLeg.L'), armR: m.getObjectByName('FrontUpLeg.R'), torso: m.getObjectByName('Torso') };
-  rig.anim = null;
-  playAnim(rig, 'Idle');
+  Object.assign(rig, { model: inst.model, mmats: inst.mats, mixer: inst.mixer, actions: inst.actions, anim: null, baseScale: inst.baseScale });
+  inst.mixer.stopAllAction(); playAnim(rig, 'Idle', 0);
 }
 function playAnim(rig, name, fade = 0.2) {
   if (!rig.actions || rig.anim === name || !rig.actions[name]) return;
@@ -1171,26 +1191,84 @@ function playAnim(rig, name, fade = 0.2) {
   if (rig.anim && rig.actions[rig.anim]) rig.actions[rig.anim].crossFadeTo(next, fade, false);
   rig.anim = name;
 }
-function trexShape(rig) {
-  // reshape the raptor into a T-Rex after each animation step: huge head, thick neck, tiny arms
-  const b = rig.bones;
-  if (b.head) b.head.scale.setScalar(2.0);
-  if (b.neck) b.neck.scale.set(1.25, 0.85, 1.25);
-  if (b.torso) b.torso.scale.set(1.2, 1, 1.15);
-  if (b.armL) b.armL.scale.setScalar(0.3);
-  if (b.armR) b.armR.scale.setScalar(0.3);
+const GLTF_CACHE = {};
+const heroInst = {};
+function paintInstance(inst, pal) {
+  const m = inst.mats;
+  for (const k of ['body', 'dark', 'belly', 'eye', 'claw', 'mouth']) if (pal[k] !== undefined) m[k].color.copy(lin(pal[k]));
+  m.eye.emissive.copy(lin(pal.eye));
+}
+async function heroFor(i) {
+  const sk = SKINS[i], key = sk.model;
+  if (!heroInst[key]) heroInst[key] = makeInstance(await loadGLTF(DINO_MODELS[key].url), key, sk.pal, DINO_MODELS[key].h, 0.85, false);
+  paintInstance(heroInst[key], sk.pal);
+  return heroInst[key];
 }
 function setModelSkin(i) {
-  if (!dino || !dino.mmats) return;
-  const p = MODEL_PAL[i], m = dino.mmats;
-  m.body.color.copy(lin(p.body)); m.dark.color.copy(lin(p.dark)); m.belly.color.copy(lin(p.belly)); m.eye.color.copy(lin(p.eye)); m.eye.emissive.copy(lin(p.eye));
+  if (!dino || !dino.mixer) return;
+  heroFor(i).then((inst) => { if (dino.skin === i) useInstance(dino, inst); }).catch(() => {});
 }
+/* realistic trees (ez-tree, MIT) with photo bark (Poly Haven / TextureCan, CC0) and low-poly props (Quaternius / Kenney, CC0) */
+const TREES = {}, PROPS = {};
+const texLoader = new THREE.TextureLoader();
+function loadTex(url, srgb = true, rep) {
+  return new Promise((res) => texLoader.load(url, (t) => { if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } res(t); }, undefined, () => res(null)));
+}
+async function loadScenery() {
+  const bark = {}, leaves = {};
+  await Promise.all(['oak', 'birch', 'pine'].map(async (b) => {
+    const [map, nrm] = await Promise.all([loadTex(`textures/bark_${b}_color.jpg`, true, [1, 4]), loadTex(`textures/bark_${b}_normal.jpg`, false, [1, 4])]);
+    bark[b] = std({ map, normalMap: nrm, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 0.95, color: 0xd8cfc0 });
+  }));
+  await Promise.all(['oak', 'ash', 'aspen', 'pine'].map(async (l) => {
+    const map = await loadTex(`textures/leaves_${l}.png`);
+    leaves[l] = std({ map, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.8, color: 0xc8dcb0 });
+  }));
+  await Promise.all(['oak_a', 'oak_b', 'ash', 'aspen', 'pine', 'bush'].map(async (n) => {
+    try {
+      const g = await loadGLTF(`models/trees/${n}.json`); const parts = [];
+      let maxY = 0; g.scene.traverse((o) => { if (o.isMesh) { o.geometry.computeBoundingBox(); maxY = Math.max(maxY, o.geometry.boundingBox.max.y); } });
+      g.scene.traverse((o) => { if (o.isMesh) { const geo = o.geometry.clone(); geo.scale(1 / maxY, 1 / maxY, 1 / maxY); const [kind, type] = o.material.name.split('_'); parts.push({ geo, mat: kind === 'bark' ? (bark[type] || bark.oak) : (leaves[type] || leaves.oak) }); } });
+      TREES[n] = parts;
+    } catch (e) { /* fall back to built-in trees */ }
+  }));
+  const PROP_COL = { grass: 0x4c7d2c, dirt: 0x6e5238, woodBark: 0x5a3e28, woodBarkDark: 0x3e2a1c, woodInner: 0xc9a06a, colorRed: 0xc8302a, stone: 0x9a968a, stoneDark: 0x6f6b62, rock: 0x6f6a62, rockTrack: 0x5a564f, crystal: 0x3aa8ff, _defaultMat: 0xe8e0d0, leafsGreen: 0x3f7a2a, leafsDark: 0x2c5a22 };
+  await Promise.all(['rock_large', 'rock_tall', 'stump', 'log', 'flower_red', 'mushroom_red', 'bush_large', 'crystal_rock', 'column', 'column_broken'].map(async (n) => {
+    try {
+      const g = await loadGLTF(`models/${n}.json`); g.scene.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(g.scene), h = box.max.y - box.min.y, c = box.getCenter(new THREE.Vector3()); const parts = [];
+      g.scene.traverse((o) => {
+        if (!o.isMesh) return;
+        const geo = o.geometry.clone(); geo.applyMatrix4(o.matrixWorld); geo.translate(-c.x, -box.min.y, -c.z); geo.scale(1 / h, 1 / h, 1 / h);
+        for (const a of Object.keys(geo.attributes)) if (geo.attributes[a].normalized || !(geo.attributes[a].array instanceof Float32Array)) { const src = geo.attributes[a], out = new Float32Array(src.count * src.itemSize); for (let i = 0; i < src.count; i++) for (let k = 0; k < src.itemSize; k++) out[i * src.itemSize + k] = src.getComponent ? src.getComponent(i, k) : src.array[i * src.itemSize + k]; geo.setAttribute(a, new THREE.BufferAttribute(out, src.itemSize)); }
+        const nm = o.material.name, key = 'prop_' + nm;
+        MAT[key] = MAT[key] || std({ color: PROP_COL[nm] !== undefined ? PROP_COL[nm] : 0x888070, roughness: nm === 'crystal' ? 0.2 : 0.85, flatShading: true, emissive: nm === 'crystal' ? 0x0a4aa0 : 0x000000 });
+        parts.push({ geo, mat: MAT[key] });
+      });
+      PROPS[n] = parts;
+    } catch (e) { /* optional */ }
+  }));
+}
+function placeParts(g, parts, x, y, z, s, ry = R(0, PI * 2), shadow = true) {
+  for (const p of parts) { const m = M(p.geo, p.mat, x, y, z, s, s, s, 0, ry, 0); m.castShadow = shadow; g.add(m); }
+}
+function tree(g, x, z, s = 1, kinds) {
+  const list = (kinds || ['oak_a', 'oak_b', 'ash', 'aspen']).filter((k) => TREES[k]);
+  if (!list.length) { bigTree(g, x, z, s); return; }
+  const k = pick(list);
+  placeParts(g, TREES[k], x, 0, z, (k === 'aspen' ? 11 : 9.5) * s * R(0.85, 1.15));
+}
+function prop(g, name, x, z, h, y = 0) { if (PROPS[name]) placeParts(g, PROPS[name], x, y, z, h); else if (name.startsWith('rock')) rock(g, x, z, h * 0.6, y); }
 async function loadModels() {
   try {
-    const [a, b] = await Promise.all([loadGLTF(MODEL_URL), loadGLTF(MODEL_URL)]);
-    attachModel(dino, a, MODEL_PAL[profile.skin], { scale: 0.4 });
-    attachModel(villain, b, VILLAIN_PAL, { trex: true, scale: 0.5 });
-  } catch (e) { console.warn('Rigged model unavailable, using built-in dinos', e); }
+    const sk = SKINS[profile.skin];
+    const [hero, vg] = await Promise.all([heroFor(profile.skin), loadGLTF(DINO_MODELS.trex.url)]);
+    dino.mixer = true; useInstance(dino, hero);
+    const vi = makeInstance(vg, 'trex', VILLAIN_PAL, 3.9, 1.12, true);
+    useInstance(villain, vi);
+  } catch (e) { console.warn('Rigged models unavailable, using built-in dinos', e); dino.mixer = null; }
+  await loadScenery();
+  await initWildlife();
 }
 let roarT = 4;
 function animateModel(rig, dt, want, ts) {
@@ -1198,7 +1276,40 @@ function animateModel(rig, dt, want, ts) {
   else if (want !== 'Jump') playAnim(rig, want, want === 'Death' ? 0.15 : 0.25);
   const a = rig.actions[rig.anim]; if (a) a.timeScale = ts;
   rig.mixer.update(dt);
-  if (rig.trex) trexShape(rig);
+}
+/* wild dinosaurs grazing and wandering beside the road */
+const wild = [];
+async function initWildlife() {
+  const plan = [['trike', { body: 0x7a6a4a, dark: 0x5a3a2a, belly: 0xc8b48a }], ['trike', { body: 0x5e6a48, dark: 0x8a4a2a, belly: 0xbfae86 }], ['raptor', { body: 0x8a6a3a, dark: 0x2a2018, belly: 0xd8c09a, eye: 0xffb020 }], ['trex', { body: 0x4e5a34, dark: 0x2a3220, belly: 0xb8a878, eye: 0xffa020 }]];
+  for (const [key, pal] of plan) {
+    try {
+      const g = await loadGLTF(DINO_MODELS[key].url);
+      const inst = makeInstance(g, key, { eye: 0x222222, ...pal }, key === 'trex' ? 4.2 : key === 'trike' ? 2.6 : 1.9, 1, false);
+      const holder = new THREE.Group(); holder.add(inst.model); holder.visible = false; scene.add(holder);
+      const w = { inst, holder, wd: 0, x: 0, mode: 'Idle', heading: 0, sp: 0, anim: null, actions: inst.actions, mixer: inst.mixer };
+      wild.push(w); respawnWild(w, true);
+    } catch (e) { /* optional */ }
+  }
+}
+function respawnWild(w, first) {
+  const side = Math.random() < 0.5 ? -1 : 1;
+  w.wd = distance + (first ? R(30, 160) : R(110, 190)); w.x = side * R(10, 17);
+  w.mode = Math.random() < 0.55 ? 'Walk' : 'Idle';
+  w.heading = w.mode === 'Walk' ? (Math.random() < 0.5 ? PI : side > 0 ? -PI / 2 - 0.3 : PI / 2 + 0.3) : R(0, PI * 2);
+  w.sp = w.mode === 'Walk' ? R(1.2, 2.2) : 0;
+  w.anim = null; w.inst.mixer.stopAllAction();
+}
+function updateWild(dt) {
+  for (const w of wild) {
+    const z = zoneAt(w.wd), ok = z === 'jungle' || z === 'waterfall' || z === 'ruins';
+    let wz = distance - w.wd;
+    if (wz > 18 || wz < -220) { respawnWild(w, false); wz = distance - w.wd; }
+    w.holder.visible = ok && (state !== 'loading');
+    if (!w.holder.visible) continue;
+    if (w.sp) { const fx = -Math.sin(w.heading), fz = -Math.cos(w.heading); w.x += fx * w.sp * dt; w.wd -= fz * w.sp * dt; if (Math.abs(w.x) < 8) { w.heading = -w.heading; w.x = Math.sign(w.x) * 8; } }
+    w.holder.position.set(w.x, 0, distance - w.wd); w.holder.rotation.y = w.heading;
+    playAnim(w, w.mode, 0.3); w.inst.mixer.update(dt);
+  }
 }
 
 /* poses: plain objects of joint angles so we can blend smoothly */
@@ -1519,6 +1630,115 @@ function zoneIndexAt(wd) { return (startZone + Math.floor(Math.max(0, wd) / ZONE
 function zoneAt(wd) { return ZONES[zoneIndexAt(wd)]; }
 function lightFor(z) { return z === 'cave' ? LIGHT.cave : nightMode ? LIGHT.night : LIGHT[z]; }
 
+/* ------------------------------------------------------------ junctions: the road ends and splits left / right */
+const JCT = { approach: 16, half: 3.6, branch: 46 };
+const UP = new THREE.Vector3(0, 1, 0);
+let junction = null, nextJunctionAt = 300, turnYaw = 0;
+const legacy = [];
+function stripRoad(g, zone, len) {
+  const geo = new THREE.PlaneGeometry(7.2, len).rotateX(-PI / 2).translate(0, 0, -len / 2);
+  const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * len / 24);
+  const road = new THREE.Mesh(geo, roadMats[zone]); road.receiveShadow = true; g.add(road);
+  for (const lx of [-1, 1]) for (let z = -1.2; z > -len; z -= 3) g.add(M(G.plane, MAT.laneMark, lx, 0.012, z, 0.11, 1.5, 1, -PI / 2, 0, 0));
+  for (const s of [-1, 1]) {
+    g.add(M(G.plane, MAT.edgeLine, s * 3.35, 0.012, -len / 2, 0.09, len, 1, -PI / 2, 0, 0));
+    if (zone === 'ruins' || zone === 'waterfall') for (let z = -0.6; z > -len; z -= 1.2) g.add(M(G.box, MAT.stone, s * 3.66, 0.14, z, 0.36, 0.28, 1.14));
+    else g.add(M(G.cyl, MAT.bark, s * 3.66, 0.15, -len / 2, 0.17, len, 0.17, PI / 2, 0, 0));
+  }
+}
+function stripDecor(g, zone, len) {
+  for (const s of [-1, 1]) {
+    g.add(M(new THREE.PlaneGeometry(40, len).rotateX(-PI / 2).translate(0, 0, -len / 2), MAT.ground, s * 23.6, -0.02, 0));
+    for (let i = 0; i < len / 4; i++) { const x = s * R(4.4, 7), z = -R(0, len); Math.random() < 0.5 ? fern(g, x, z) : grass(g, x, z); }
+    for (let i = 0; i < len / 9; i++) { const x = s * R(7, 13), z = -R(0, len); zone !== 'ruins' && Math.random() < 0.35 ? palm(g, x, z) : tree(g, x, z, R(0.8, 1.1)); }
+    for (let i = 0; i < len / 12; i++) tree(g, s * R(14, 28), -R(0, len), R(1, 1.4));
+    if (zone === 'ruins') pillar(g, s * 4.7, -R(4, len - 4));
+  }
+}
+function buildJunction(zone) {
+  const g = new THREE.Group();
+  const A = JCT.approach, H = JCT.half, cz = -(A + H);
+  const ap = new THREE.Group(); stripRoad(ap, zone, A); stripDecor(ap, zone, A); g.add(ap);
+  const cr = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 7.2).rotateX(-PI / 2), roadMats[zone]); cr.position.set(0, 0, cz); cr.receiveShadow = true; g.add(cr);
+  for (const dir of [-1, 1]) {
+    const b = new THREE.Group(); stripRoad(b, zone, JCT.branch); stripDecor(b, zone, JCT.branch);
+    b.rotation.y = dir > 0 ? -PI / 2 : PI / 2; b.position.set(dir * H, 0, cz); g.add(b);
+  }
+  // the dead end: ground, a wall of boulders and jungle, and an arrow sign
+  g.add(M(new THREE.PlaneGeometry(8, 46).rotateX(-PI / 2).translate(0, 0, -23), MAT.ground, 0, -0.02, cz - H));
+  for (let x = -4.6; x <= 4.6; x += 1.5) rock(g, x + R(-0.3, 0.3), cz - H - R(0.8, 1.6), R(1.1, 1.7));
+  for (let i = 0; i < 6; i++) tree(g, R(-6, 6), cz - H - R(4, 12), R(1, 1.4));
+  for (let i = 0; i < 6; i++) bush(g, R(-6, 6), cz - H - R(2.5, 5), R(1, 1.6));
+  sign(g, 0, cz - H - 0.4, MAT.signs.turn, 1.7);
+  if (zone === 'ruins') { g.add(M(G.box, MAT.stone, 0, 2.4, cz - H - 2.6, 12, 4.8, 1.4)); }
+  return bake(g);
+}
+let forceJ = false;
+function canJunction(wd) {
+  if (forceJ) return true;
+  const z = zoneAt(wd); if (!(z === 'jungle' || z === 'waterfall' || z === 'ruins')) return false;
+  const into = ((wd % ZONE_LEN) + ZONE_LEN) % ZONE_LEN; return into > 40 && into < ZONE_LEN - 90;
+}
+function getJunctionPiece(zone) {
+  const key = 'J_' + zone, p = pools[key] || (pools[key] = []);
+  let c = p.find((x) => !x.userData.used);
+  if (!c) { c = buildJunction(zone); c.userData.zone = zone; p.push(c); scene.add(c); }
+  c.userData.used = true; c.visible = true; c.rotation.y = 0; return c;
+}
+function clearAhead() {
+  chunks.forEach(freeChunk); chunks.length = 0;
+  portals.forEach((p) => { p.userData.used = false; p.visible = false; }); portals.length = 0;
+  obstacles.forEach((o) => { o.active = false; o.mesh.visible = false; }); obstacles.length = 0;
+  items.forEach((it) => { it.active = false; it.g.visible = false; }); items.length = 0;
+  coins.forEach((c) => (c.active = false));
+}
+function doTurn(dir) {
+  const J = junction.J, th = dir * PI / 2;
+  const i = chunks.indexOf(J); if (i >= 0) chunks.splice(i, 1);
+  clearAhead();
+  J.rotation.y = th;
+  const c = new THREE.Vector3(0, 0, -(JCT.approach + JCT.half)).applyAxisAngle(UP, th);
+  legacy.push({ obj: J, x0: -c.x, z0: -c.z, d0: distance });
+  J.position.set(-c.x, 0, -c.z);
+  nextChunk = distance + JCT.half + JCT.branch - 1;
+  nextRow = distance + 22;
+  nextJunctionAt = distance + R(380, 600);
+  lane = 1; laneFrom = 1; px = 0; laneT = 0;
+  turnYaw = th;
+  junction = null; setTurnHint(false);
+  wild.forEach((w) => respawnWild(w, false));
+  run.turns = (run.turns || 0) + 1;
+  sfx('lane'); vibrate(15);
+}
+function missTurn() {
+  shake = 0.8; sfx('hit'); vibrate([60, 40, 80]); flashScreen(); run.lastHit = distance;
+  burst(px, 1.2, -1, 0xffe9a0, 24, 7, 0.4, 0.5, 10);
+  lives--; addChase(0.5);
+  if (chase >= 1) { caught = true; deathBy = 'trex'; }
+  if (lives <= 0 || caught) { speed = 0; setState('dying'); dieT = 0; slowmo = 0.45; setTurnHint(false); return; }
+  invuln = 1.8; speed *= 0.5; updateHud(true);
+  doTurn(Math.random() < 0.5 ? -1 : 1);
+}
+function updateJunction() {
+  if (!junction) return;
+  const d2c = junction.wdC - distance;
+  setTurnHint(d2c < 26 && d2c > -3, junction.dir);
+  if (d2c <= (junction.dir ? 0 : -2.2)) { if (junction.dir) doTurn(junction.dir); else missTurn(); }
+}
+let hintShown = null;
+function setTurnHint(on, dir = 0) {
+  const el = $('turnHint'); if (!el) return;
+  const key = on + ':' + dir; if (hintShown === key) return; hintShown = key;
+  el.hidden = !on; el.dataset.dir = dir;
+}
+function syncLegacy() {
+  for (let i = legacy.length - 1; i >= 0; i--) {
+    const L = legacy[i];
+    L.obj.position.set(L.x0, 0, L.z0 + (distance - L.d0));
+    if (distance - L.d0 > 70) { L.obj.userData.used = false; L.obj.visible = false; L.obj.rotation.y = 0; legacy.splice(i, 1); }
+  }
+}
+
 function getChunk(zone) {
   const p = pools[zone] || (pools[zone] = []);
   let c = p.find((x) => !x.userData.used);
@@ -1534,8 +1754,13 @@ function getPortal(zone) {
   c.userData.used = true; c.visible = true; return c;
 }
 function ensureChunks() {
-  while (nextChunk < distance + 200) {
+  while (nextChunk < distance + 200 && !junction) {
     const z = zoneAt(nextChunk);
+    if (state === 'playing' && nextChunk >= nextJunctionAt && canJunction(nextChunk) && canJunction(nextChunk + CHUNK)) {
+      const J = getJunctionPiece(z); J.userData.wd = nextChunk; J.position.set(0, 0, distance - nextChunk); chunks.push(J);
+      junction = { J, wdStart: nextChunk, wdC: nextChunk + JCT.approach + JCT.half, dir: 0 };
+      nextChunk += CHUNK; break;
+    }
     const c = getChunk(z); c.userData.wd = nextChunk; c.position.z = distance - nextChunk; chunks.push(c);
     if (nextChunk > 0 && zoneAt(nextChunk - CHUNK) !== z) { const p = getPortal(z); p.userData.wd = nextChunk; portals.push(p); }
     nextChunk += CHUNK;
@@ -1615,7 +1840,7 @@ function spawnRow(wd) {
   } else if (free.length && Math.random() < 0.018 && eggsRun < 5) spawnItem('egg', pick(free), wd + 11);
 }
 function ensureRows() {
-  while (nextRow < distance + 130) {
+  while (nextRow < Math.min(distance + 130, junction ? junction.wdStart + 4 : 1e9)) {
     spawnRow(nextRow);
     const gap = clamp(speed * 1.25, 18, 34) + R(0, 7);
     nextRow += gap;
@@ -1628,6 +1853,8 @@ function resetWorld() {
   obstacles.forEach((o) => { o.active = false; o.mesh.visible = false; }); obstacles.length = 0;
   items.forEach((i) => { i.active = false; i.g.visible = false; }); items.length = 0;
   coins.forEach((c) => (c.active = false));
+  legacy.forEach((L) => { L.obj.userData.used = false; L.obj.visible = false; L.obj.rotation.y = 0; }); legacy.length = 0;
+  if (junction) { junction.J.userData.used = false; junction.J.visible = false; junction = null; } setTurnHint(false); nextJunctionAt = R(260, 380); turnYaw = 0;
   distance = 0; speed = 0; nextChunk = -48; nextRow = 45; lane = 1; px = 0; py = 0; vy = 0; air = false; slideT = 0; invuln = 0;
   coinsRun = 0; eggsRun = 0; bonus = 0; lives = 2; powers.magnet = powers.boost = powers.shield = 0; chase = 0; caught = false; runActive = false;
   curZone = zoneAt(0); shownZone = '';
@@ -1676,7 +1903,7 @@ const ACH = [
   { id: 'escape', name: 'Close Call', desc: 'Escape the T-Rex 5 times', r: 300, t: () => tot('escapes') >= 5, p: () => [tot('escapes'), 5] },
   { id: 'zones', name: 'Explorer', desc: 'Pass through all five areas in one run', r: 500, t: () => run.zones.size >= 5 },
   { id: 'clean', name: 'Untouchable', desc: 'Run 1,000 m without a hit', r: 500, t: () => run.clean >= 1000 },
-  { id: 'dinos', name: 'Collector', desc: 'Unlock all three dinos', r: 500, t: () => profile.owned.skins.length >= 3, p: () => [profile.owned.skins.length, 3] },
+  { id: 'dinos', name: 'Collector', desc: 'Unlock all five dinos', r: 1500, t: () => profile.owned.skins.length >= SKINS.length, p: () => [profile.owned.skins.length, SKINS.length] },
   { id: 'roads', name: 'Pathfinder', desc: 'Unlock every road', r: 800, t: () => profile.owned.roads.length >= 6, p: () => [profile.owned.roads.length, 6] }
 ];
 const GOAL_T = {
@@ -1880,6 +2107,9 @@ function gameOver() {
 /* ------------------------------------------------------------ input */
 function act(a) {
   if (state !== 'playing') return;
+  if ((a === 'left' || a === 'right') && junction && junction.wdC - distance < 26 && junction.wdC - distance > -3) {
+    junction.dir = a === 'left' ? -1 : 1; sfx('lane'); setTurnHint(true, junction.dir); return;
+  }
   if (a === 'left' || a === 'right') {
     const nl = clamp(lane + (a === 'left' ? -1 : 1), 0, 2);
     if (nl !== lane) { laneFrom = lane; lane = nl; laneT = 0.25; sfx('lane'); }
@@ -1961,6 +2191,7 @@ function update(dt) {
   const z = zoneAt(distance);
   if (z !== curZone) { curZone = z; run.zones.add(z); toastZone(z); }
   progT -= dt; if (progT <= 0) { progT = 0.5; checkProgress(true); }
+  updateJunction(); if (state !== 'playing') return;
   ensureChunks(); ensureRows();
 
   // obstacles
@@ -2022,6 +2253,7 @@ function updateDying(dt) {
   if (dieT > 1.6) gameOver();
 }
 function syncWorld() {
+  syncLegacy();
   for (const c of chunks) c.position.z = distance - c.userData.wd;
   for (const p of portals) p.position.z = distance - p.userData.wd;
   const m = coinMesh, dummy = syncWorld.d || (syncWorld.d = new THREE.Object3D());
@@ -2049,7 +2281,7 @@ function animateDino(dt) {
     else { roarT -= dt; if (roarT <= 0 && dino.anim === 'Idle') { roarT = R(5, 8); playAnim(dino, 'Attack', 0.2); } if (dino.anim === 'Attack' && dino.actions.Attack.time >= dino.actions.Attack.getClip().duration - 0.01) playAnim(dino, 'Idle', 0.3); want = dino.anim === 'Attack' ? 'Attack' : 'Idle'; }
     animateModel(dino, state === 'paused' ? 0 : dt, want, ts);
     const sl = slideT > 0 && !air && state === 'playing';
-    dino.model.scale.y = damp(dino.model.scale.y, 0.4 * (sl ? 0.55 : 1), 18, dt);
+    dino.model.scale.y = damp(dino.model.scale.y, dino.baseScale * (sl ? 0.55 : 1), 18, dt);
     dino.model.rotation.x = damp(dino.model.rotation.x, sl ? 0.12 : 0, 14, dt);
   } else {
     if (state !== 'paused') blendPose(dino.cur, tgt, 1 - Math.exp(-(air || slideT > 0 ? 16 : 12) * dt));
@@ -2071,7 +2303,9 @@ function animateDino(dt) {
   if (dino.mmats) dino.mmats.body.emissive.setRGB(boostGlow * 0.04, boostGlow * 0.2, boostGlow * 0.5);
 }
 const camTarget = new THREE.Vector3(), camLook = new THREE.Vector3(), lookCur = new THREE.Vector3(0, 1.2, 0);
+const camBase = new THREE.Vector3(3, 2.3, -5), lookOut = new THREE.Vector3(), pivot = new THREE.Vector3();
 function updateCamera(dt) {
+  camera.position.copy(camBase);
   if (camMode === 'menu' || camMode === 'select') {
     const a = camMode === 'select' ? 0.5 + Math.sin(t * 0.3) * 0.12 : 0.55 + Math.sin(t * 0.18) * 0.35;
     const r = camMode === 'select' ? 4.6 : 5.0;
@@ -2096,7 +2330,14 @@ function updateCamera(dt) {
       lookCur.lerp(camLook, 1 - Math.exp(-8 * dt));
     }
   }
-  camera.lookAt(lookCur);
+  camBase.copy(camera.position); lookOut.copy(lookCur);
+  if (Math.abs(turnYaw) > 1e-4) {
+    pivot.set(px, 0, 0);
+    camera.position.sub(pivot).applyAxisAngle(UP, turnYaw).add(pivot);
+    lookOut.sub(pivot).applyAxisAngle(UP, turnYaw).add(pivot);
+    turnYaw = damp(turnYaw, 0, 5.5, dt);
+  }
+  camera.lookAt(lookOut);
   if (shake > 0) { shake = Math.max(0, shake - dt * 1.6); camera.position.x += R(-1, 1) * shake * 0.3; camera.position.y += R(-1, 1) * shake * 0.3; }
   const fovT = baseFov + (powers.boost > 0 && state === 'playing' ? 9 : 0) + Math.min(6, speed * 0.12);
   camera.fov = damp(camera.fov, fovT, 3, dt); camera.updateProjectionMatrix();
@@ -2156,7 +2397,7 @@ function frame() {
   const d0 = distance;
   if (state === 'playing') update(dt);
   else if (state === 'dying') updateDying(dt);
-  if (state !== 'paused') warmPools(dt);
+  if (state !== 'paused') { warmPools(dt); updateWild(dt); }
   syncWorld();
   animateDino(dt);
   updateCamera(dt);
@@ -2175,7 +2416,7 @@ function renderChar() {
   const sk = SKINS[selIdx];
   $('cName').textContent = sk.name; $('cDesc').textContent = sk.desc;
   $('cSpeed').style.width = sk.stats[0] * 20 + '%'; $('cJump').style.width = sk.stats[1] * 20 + '%'; $('cShield').style.width = sk.stats[2] * 20 + '%';
-  [...$('cDots').children].forEach((d, i) => d.classList.toggle('on', i === selIdx));
+  $('cDots').innerHTML = SKINS.map((_, i) => `<i class="${i === selIdx ? 'on' : ''}"></i>`).join('');
   const owned = profile.owned.skins.includes(selIdx), price = SKIN_PRICE[selIdx];
   const btn = $('cSelect');
   btn.classList.toggle('btn-locked', !owned);
@@ -2233,8 +2474,8 @@ function wireUI() {
   click('setBack', () => show(settingsReturn));
   click('mDino', () => { selIdx = profile.skin; setState('charSel'); camMode = 'select'; renderChar(); show('charSel'); });
   click('cBack', () => { setSkin(profile.skin); setState('menu'); camMode = 'menu'; show('menu'); });
-  click('cPrev', () => { selIdx = (selIdx + 2) % 3; renderChar(); dino.root.rotation.y += PI * 2; sfx('roar'); });
-  click('cNext', () => { selIdx = (selIdx + 1) % 3; renderChar(); dino.root.rotation.y -= PI * 2; sfx('roar'); });
+  click('cPrev', () => { selIdx = (selIdx + SKINS.length - 1) % SKINS.length; renderChar(); dino.root.rotation.y += PI * 2; sfx('roar'); });
+  click('cNext', () => { selIdx = (selIdx + 1) % SKINS.length; renderChar(); dino.root.rotation.y -= PI * 2; sfx('roar'); });
   click('cSelect', () => {
     if (!profile.owned.skins.includes(selIdx)) {
       if (!spend(SKIN_PRICE[selIdx])) return;
@@ -2314,7 +2555,7 @@ async function boot() {
     startZone = profile.zone === 5 ? 0 : profile.zone; nightMode = profile.zone === 5;
     resetWorld();
     renderer.compile(scene, camera);
-    camera.position.set(3, 2.3, -5); lookCur.set(0, 1.5, 0);
+    camera.position.set(3, 2.3, -5); camBase.copy(camera.position); lookCur.set(0, 1.5, 0);
     progress(1, 'Ready'); await nextFrame();
     wireUI(); refreshMenu(); renderSettings();
     setState('menu'); show('menu');
@@ -2327,5 +2568,5 @@ async function boot() {
 }
 requestAnimationFrame(frame);
 boot();
-window.__diano = { get state() { return state; }, act, startRun, get distance() { return distance; }, get powers() { return powers; }, setZone: (i) => { profile.zone = i; }, chase: (v) => addChase(v), catchMe: () => { addChase(1); caught = true; deathBy = 'trex'; setState('dying'); dieT = 0; slowmo = 0.5; }, peekTrex: () => { debugV = true; }, gift: (n) => { profile.wallet += n; saveProfile(); refreshWallets(); } };
+window.__diano = { get state() { return state; }, act, startRun, get distance() { return distance; }, get powers() { return powers; }, setZone: (i) => { profile.zone = i; }, chase: (v) => addChase(v), catchMe: () => { addChase(1); caught = true; deathBy = 'trex'; setState('dying'); dieT = 0; slowmo = 0.5; }, peekTrex: () => { debugV = true; }, info: () => ({ tris: renderer.info.render.triangles, calls: renderer.info.render.calls, geos: renderer.info.memory.geometries }), jct: () => { for (let i = chunks.length - 1; i >= 0; i--) if (chunks[i].userData.wd > distance + 4) { freeChunk(chunks[i]); chunks.splice(i, 1); } obstacles.forEach((o) => { o.active = false; o.mesh.visible = false; }); nextChunk = Math.max(...chunks.map((c) => c.userData.wd)) + CHUNK; nextJunctionAt = 0; forceJ = true; ensureChunks(); forceJ = false; }, toJunction: () => { if (junction) distance = junction.wdC - 12; }, get junction() { return !!junction; }, gift: (n) => { profile.wallet += n; saveProfile(); refreshWallets(); } };
 })();

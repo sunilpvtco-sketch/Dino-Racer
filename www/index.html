@@ -228,6 +228,12 @@ button{font:inherit;color:inherit}
 .card .req{top:auto;bottom:34px;font-family:var(--font-d);font-size:14px}
 .reason{font-family:var(--font-d);font-size:18px;letter-spacing:.05em;color:#ffe08a;text-shadow:0 2px 0 #000;margin-top:-6px}
 .earned{font-family:var(--font-d);font-size:18px;color:#ffe08a}
+#turnHint{position:absolute;left:50%;top:30%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:8px 14px;border-radius:18px;background:rgba(20,10,4,.55);font-family:var(--font-d);font-size:20px;letter-spacing:.06em;color:#fff;text-shadow:0 2px 0 #000;white-space:nowrap}
+#turnHint .ta{width:44px;height:64px;animation:pulseA .6s ease-in-out infinite alternate}
+#turnHint .r{animation-delay:.3s}
+#turnHint[data-dir="-1"] .r,#turnHint[data-dir="1"] .l{opacity:.25;animation:none}
+#turnHint[data-dir="-1"] .l,#turnHint[data-dir="1"] .r{animation:none;transform:scale(1.25);filter:drop-shadow(0 0 10px #ffd24a)}
+@keyframes pulseA{from{transform:scale(.9)}to{transform:scale(1.12)}}
 @media (prefers-reduced-motion:reduce){#hint .hand{animation:none}.btn,.switch::after{transition:none}}
 @media (min-height:760px){.btn{padding:15px 18px}}
 </style>
@@ -337,7 +343,7 @@ button{font:inherit;color:inherit}
       <div class="how-list">
         <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3l7 8h-4.5v10h-5V11H5z"/></svg><div><b>Swipe Up</b><span>Jump over logs, spikes and bones</span></div></div>
         <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M12 21l-7-8h4.5V3h5v10H19z"/></svg><div><b>Swipe Down</b><span>Slide under gates and branches</span></div></div>
-        <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M2 12l6-6v4h8V6l6 6-6 6v-4H8v4z"/></svg><div><b>Swipe Left / Right</b><span>Change lane to dodge rocks and walls</span></div></div>
+        <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M2 12l6-6v4h8V6l6 6-6 6v-4H8v4z"/></svg><div><b>Swipe Left / Right</b><span>Change lane to dodge rocks and walls. At a junction, swipe to turn onto the new road.</span></div></div>
         <div class="how-item"><i class="coin-ic" style="width:34px;height:34px"></i><div><b>Collect Coins</b><span>Each coin adds 20 to your score</span></div></div>
         <div class="how-item"><svg><use href="#i-heart"/></svg><div><b>Use Power-Ups</b><span>Magnet, Speed Boost, Shield, Extra Life and the rare Golden Egg</span></div></div>
         <div class="how-item"><svg viewBox="0 0 24 24"><path fill="#fff" d="M7 7h10a5 5 0 015 5v3a3 3 0 01-5.2 2L15 15H9l-1.8 2A3 3 0 012 15v-3a5 5 0 015-5zm0 3v1.5H5.5V13H7v1.5h1.5V13H10v-1.5H8.5V10zm9.5 0a1 1 0 100 2 1 1 0 000-2zm-2 2a1 1 0 100 2 1 1 0 000-2z"/></svg><div><b>Controller &amp; Keyboard</b><span>D-pad or stick to move, A jump, B slide, Start pause. Arrows/WASD + Space on keyboard.</span></div></div>
@@ -384,6 +390,7 @@ button{font:inherit;color:inherit}
   </div>
   <div id="zoneToast"></div>
   <div id="achToast"></div>
+  <div id="turnHint" hidden><svg class="ta l"><use href="#i-arrowL"/></svg><b>SWIPE TO TURN</b><svg class="ta r"><use href="#i-arrowR"/></svg></div>
   <div id="hint" hidden><svg class="hand"><use href="#i-hand"/></svg><div>SWIPE TO MOVE<br><small style="font-size:13px">UP = JUMP · DOWN = SLIDE</small></div></div>
   <div class="hud-bottom">
     <div class="pw" id="pwMagnet" style="--c:#ff3a3a" hidden><svg><use href="#i-magnet"/></svg><b></b></div>
