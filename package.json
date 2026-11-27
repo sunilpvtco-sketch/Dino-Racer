@@ -1,0 +1,17 @@
+{
+  "name": "diano-racer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Diano Racer - 3D jungle endless runner",
+  "scripts": {
+    "serve": "cd www && python3 -m http.server 8000",
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "6.2.0",
+    "@capacitor/core": "6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "6.2.0"
+  }
+}

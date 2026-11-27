@@ -1,0 +1,66 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master, 'claude/**']
+    paths:
+      - 'www/**'
+      - 'android/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Copy game into the Android project
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk DianoRacer.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DianoRacer-apk
+          path: DianoRacer.apk
+
+      - name: Publish as a GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-v${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Diano Racer APK (build ${{ github.run_number }})
+          make_latest: true
+          files: DianoRacer.apk
+          body: |
+            Download **DianoRacer.apk** below and open it on your Android phone.
+            If Android asks, allow installing apps from this source.
+            Built from commit ${{ github.sha }}.

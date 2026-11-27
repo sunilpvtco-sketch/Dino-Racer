@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Diano Racer</string>
+    <string name="title_activity_main">Diano Racer</string>
+    <string name="package_name">com.dianoracer.game</string>
+    <string name="custom_url_scheme">com.dianoracer.game</string>
+</resources>
