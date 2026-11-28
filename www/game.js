@@ -35,7 +35,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
-const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+const ANISO = Math.min(16, renderer.capabilities.getMaxAnisotropy());
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 700);
@@ -63,6 +63,7 @@ window.addEventListener('resize', resize);
 
 /* ------------------------------------------------------------ canvas texture helpers */
 function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
+function mkHD(w, h, k = 2) { const c = document.createElement('canvas'); c.width = w * k; c.height = h * k; const g = c.getContext('2d'); g.scale(k, k); return [c, g]; }
 function tex(c, { repeat = false, srgb = true } = {}) {
   const t = new THREE.CanvasTexture(c);
   if (srgb) t.encoding = THREE.sRGBEncoding;
@@ -111,7 +112,7 @@ function leafSpecks(g, W, H, n, hueA, hueB) {
 
 /* ---- road surfaces (each returns {map, rough}) ---- */
 function genMud() {
-  const W = 512, H = 1024, [c, g] = mk(W, H), [rc, rg] = mk(W, H);
+  const W = 512, H = 1024, [c, g] = mkHD(W, H), [rc, rg] = mk(W, H);
   g.fillStyle = '#6b4527'; g.fillRect(0, 0, W, H);
   rg.fillStyle = '#e0e0e0'; rg.fillRect(0, 0, W, H);
   for (let i = 0; i < 170; i++) {
@@ -157,7 +158,7 @@ function genMud() {
   return { map: tex(c, { repeat: true }), rough: tex(rc, { repeat: true, srgb: false }) };
 }
 function genStones({ rowH = 64, wMin = 50, wMax = 82, hue = [30, 48], sat = [6, 14], lit = [36, 56], moss = 0.6, mortar = '#3a3427', W = 512, H = 1024, edge = true, slab = false }) {
-  const [c, g] = mk(W, H), [rc, rg] = mk(W, H);
+  const [c, g] = mkHD(W, H), [rc, rg] = mk(W, H);
   g.fillStyle = mortar; g.fillRect(0, 0, W, H); rg.fillStyle = '#f0f0f0'; rg.fillRect(0, 0, W, H);
   speckle(g, W, H, 3000, () => hsl(R(30, 60), 20, R(10, 30), 0.6));
   const rows = Math.round(H / rowH), rh = H / rows;
@@ -190,7 +191,7 @@ function genStones({ rowH = 64, wMin = 50, wMax = 82, hue = [30, 48], sat = [6, 
   return { map: tex(c, { repeat: true }), rough: tex(rc, { repeat: true, srgb: false }) };
 }
 function genPlanks() {
-  const W = 512, H = 1024, [c, g] = mk(W, H), [rc, rg] = mk(W, H);
+  const W = 512, H = 1024, [c, g] = mkHD(W, H), [rc, rg] = mk(W, H);
   g.fillStyle = '#1b1008'; g.fillRect(0, 0, W, H); rg.fillStyle = '#dcdcdc'; rg.fillRect(0, 0, W, H);
   const n = 22, ph = H / n;
   for (let i = 0; i < n; i++) {
@@ -213,7 +214,7 @@ function genPlanks() {
   return { map: tex(c, { repeat: true }), rough: tex(rc, { repeat: true, srgb: false }) };
 }
 function genCaveFloor() {
-  const W = 512, H = 1024, [c, g] = mk(W, H), [rc, rg] = mk(W, H);
+  const W = 512, H = 1024, [c, g] = mkHD(W, H), [rc, rg] = mk(W, H);
   g.fillStyle = '#2c2723'; g.fillRect(0, 0, W, H); rg.fillStyle = '#d0d0d0'; rg.fillRect(0, 0, W, H);
   for (let i = 0; i < 260; i++) { const x = R(0, W), y = R(0, H), r = R(10, 50); tiled(W, H, x, y, r, (X, Y) => blob(g, X, Y, r, hsl(R(15, 35), R(5, 18), R(12, 30), 0.5), 'rgba(0,0,0,0)')); }
   speckle(g, W, H, 3000, () => hsl(R(20, 220), R(5, 20), R(8, 40), 0.6));
@@ -251,7 +252,7 @@ function genGround(dark) {
   return tex(c, { repeat: true });
 }
 function genBark(rings) {
-  const W = 256, H = 512, [c, g] = mk(W, H);
+  const W = 256, H = 512, [c, g] = mkHD(W, H);
   g.fillStyle = rings ? '#6a5236' : '#4a3220'; g.fillRect(0, 0, W, H);
   if (rings) {
     for (let x = 0; x < W; x += R(10, 18)) { g.fillStyle = hsl(30, R(20, 35), R(18, 34), 0.8); g.fillRect(x, 0, R(3, 7), H); }
@@ -263,7 +264,7 @@ function genBark(rings) {
   return tex(c, { repeat: true });
 }
 function genFrond(kind) {
-  const W = 256, H = 512, [c, g] = mk(W, H);
+  const W = 256, H = 512, [c, g] = mkHD(W, H);
   const cx = W / 2;
   const base = kind === 'fern' ? [95, 60, 30] : kind === 'banana' ? [100, 55, 32] : [92, 58, 28];
   if (kind === 'banana') {
@@ -305,7 +306,7 @@ function genGrass() {
   return tex(c);
 }
 function genRock() {
-  const W = 256, H = 256, [c, g] = mk(W, H);
+  const W = 256, H = 256, [c, g] = mkHD(W, H);
   g.fillStyle = '#76736a'; g.fillRect(0, 0, W, H);
   for (let i = 0; i < 300; i++) { const x = R(0, W), y = R(0, H), r = R(4, 30); tiled(W, H, x, y, r, (X, Y) => blob(g, X, Y, r, hsl(R(30, 60), R(4, 12), R(25, 65), 0.35), 'rgba(0,0,0,0)')); }
   speckle(g, W, H, 2500, () => hsl(40, 8, R(15, 75), 0.6));
@@ -488,10 +489,9 @@ const SKINS = [
   { name: 'RUSTY', desc: 'The fastest legs in the valley, but a shorter hop.', stats: [4, 2, 3], base: '#9a6a3c', dorsal: '#5a3518', dark: 'rgba(70,38,14,.45)', light: 'rgba(210,160,100,.25)', belly: '#ead0a4', stripe: 'rgba(120,40,18,.75)', spine: '#b84a1c', spike: 0xc2501e, claw: 0x20120c, eye: 0xe0a428 },
   { name: 'FROST', desc: 'Light as snow. Jumps highest, power-ups last longer.', stats: [2, 4, 4], base: '#c9cbc2', dorsal: '#8c8e88', dark: 'rgba(95,95,92,.4)', light: 'rgba(255,255,250,.35)', belly: '#f3eee0', stripe: 'rgba(90,92,92,.6)', spine: '#a85a36', spike: 0xb86a44, claw: 0x262626, eye: 0x7ec8e8 }
 ];
-SKINS[0].model = 'reptile'; SKINS[0].pal = { tint: 0xffffff, eye: 0xffb020 };
-SKINS[0].desc = 'Brave and balanced. A real jungle reptile with a scaly hide.';
-SKINS[1].model = 'raptor'; SKINS[1].pal = { body: 0x9a5426, dark: 0x2c170a, belly: 0xe2b27c, eye: 0xffc030 };
-SKINS[2].model = 'raptor'; SKINS[2].pal = { body: 0xd6d6ce, dark: 0x5e605c, belly: 0xf4efe2, eye: 0x58c8ff };
+SKINS[0].model = 'raptor'; SKINS[0].pal = { body: 0x5f7f34, dark: 0x2a3a1c, belly: 0xcdb98a, eye: 0xffb020 };
+SKINS[1].model = 'raptor'; SKINS[1].pal = { body: 0x8a5a32, dark: 0x3a2412, belly: 0xd6b48a, eye: 0xffc030 };
+SKINS[2].model = 'raptor'; SKINS[2].pal = { body: 0xb8b8ae, dark: 0x55574f, belly: 0xe8e2d2, eye: 0x58c8ff };
 SKINS.push(
   { ...SKINS[0], name: 'TRIKE', desc: 'A three-horned tank. Slow, but shields and boosts last ages.', stats: [2, 2, 5], model: 'trike', pal: { body: 0x8a4a22, dark: 0x5e6e34, belly: 0xd8c8a0 } },
   { ...SKINS[0], name: 'REX', desc: 'A young T-Rex. The fastest runner in the jungle.', stats: [5, 2, 3], model: 'trex', pal: { body: 0x3f6a2a, dark: 0x22361a, belly: 0xd8c48e, eye: 0xffb020, claw: 0x1a140e, mouth: 0x8a1c1c } }
@@ -540,8 +540,8 @@ function buildMaterials() {
   MAT.canopy = [0x1d5414, 0x2c7019, 0x153f0f, 0x3a8420].map((c) => std({ color: c, roughness: 0.85, flatShading: true }));
   MAT.bush = std({ color: 0x24591a, roughness: 0.85, flatShading: true });
   MAT.flower = std({ color: 0xe8333a, roughness: 0.5, emissive: 0x400000 });
-  MAT.rock = std({ map: TEX.rock, color: 0xb0aa9c, roughness: 0.92, flatShading: true });
-  MAT.moss = std({ color: 0x4d7d26, roughness: 1, flatShading: true });
+  MAT.rock = std({ map: TEX.rock, color: 0xb0aa9c, roughness: 0.92 });
+  MAT.moss = std({ color: 0x4d7d26, roughness: 1 });
   MAT.wood = MAT.bark;
   MAT.woodLight = std({ color: 0xb38152, roughness: 0.85 });
   MAT.rope = std({ color: 0xb49460, roughness: 1 });
@@ -553,7 +553,7 @@ function buildMaterials() {
   MAT.bone = std({ color: 0xe9dcc0, roughness: 0.6 });
   MAT.crate = std({ map: TEX.crate, roughness: 0.85 });
   MAT.logEnd = std({ map: TEX.logEnd, roughness: 0.9 });
-  MAT.cliff = std({ map: TEX.rock, color: 0x8c8678, roughness: 0.95, flatShading: true });
+  MAT.cliff = std({ map: TEX.rock, color: 0x8c8678, roughness: 0.95 });
   TEX.caveWall.repeat.set(4, 3);
   MAT.caveWall = std({ map: TEX.caveWall, roughness: 0.85, flatShading: true });
   MAT.crystal = std({ color: 0x2f9cff, emissive: 0x0a62ff, emissiveIntensity: 1.0, roughness: 0.15, metalness: 0.1, flatShading: true });
@@ -590,6 +590,21 @@ function jitter(geo, amt) {
     p.setXYZ(i, p.getX(i) * f, p.getY(i) * f, p.getZ(i) * f);
   }
   geo.computeVertexNormals(); return geo;
+}
+function boulder() {
+  // rounded, lumpy rock: smooth 3D noise pushed onto a sphere, radial normals for soft shading
+  const geo = new THREE.IcosahedronGeometry(1, 2), p = geo.attributes.position;
+  const o = [R(0, 100), R(0, 100), R(0, 100)], f = R(1.2, 1.8);
+  const n3 = (x, y, z) => Math.sin(x * f + o[0]) * Math.sin(y * f * 1.3 + o[1]) * Math.sin(z * f * 0.9 + o[2]);
+  const nrm = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const k = 1 + 0.22 * n3(x, y, z) + 0.08 * n3(x * 2.7, y * 2.7, z * 2.7) - (y < -0.2 ? 0.25 * (-0.2 - y) : 0);
+    p.setXYZ(i, x * k, y * k * 0.85, z * k);
+    nrm[i * 3] = x; nrm[i * 3 + 1] = y; nrm[i * 3 + 2] = z;
+  }
+  geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+  return geo;
 }
 function bentLeaf(w, L, sw, sl, { lift = 0.45, droop = 0.85, fold = 0.25, taper = 0.15 } = {}) {
   const g = new THREE.PlaneGeometry(w, L, sw, sl); g.translate(0, L / 2, 0);
@@ -666,7 +681,7 @@ function buildGeometries() {
   G.ico0 = new THREE.IcosahedronGeometry(1, 0);
   G.ico1 = new THREE.IcosahedronGeometry(1, 1);
   G.sph = new THREE.SphereGeometry(1, 14, 10);
-  G.rocks = [0, 1, 2, 3, 4].map(() => jitter(new THREE.IcosahedronGeometry(1, 1), 0.2));
+  G.rocks = [0, 1, 2, 3, 4].map(() => boulder());
   G.blobs = [0, 1, 2].map(() => jitter(new THREE.IcosahedronGeometry(1, 1), 0.14));
   G.frond = bentLeaf(1.0, 3.3, 2, 8, { lift: 0.5, droop: 0.95, fold: 0.28 });
   G.banana = bentLeaf(0.95, 2.3, 1, 6, { lift: 1.0, droop: 0.9, fold: 0.18, taper: 0 });
@@ -1179,12 +1194,11 @@ function setSkin(i) {
 /* ------------------------------------------------------------ rigged glTF dinosaurs (Quaternius, public domain) */
 // per model: file, which material plays which role, and the height we want in metres
 const DINO_MODELS = {
-  reptile: { url: 'models/reptile.json', keep: true, h: 1.75 },
   raptor: { url: 'models/velociraptor.json', roles: { Brown: 'body', Black: 'dark', LightBrown: 'belly', Eyes: 'eye' }, h: 1.9 },
   trex: { url: 'models/trex.json', roles: { Green: 'body', LightGreen: 'dark', LightYellow: 'belly', Black: 'claw', Red: 'mouth' }, h: 2.5 },
   trike: { url: 'models/triceratops.json', roles: { Brown: 'body', Purple: 'dark', LightBrown: 'belly' }, h: 1.9 }
 };
-const VILLAIN_PAL = { body: 0x34291f, dark: 0x6b1a10, belly: 0x8a6e52, eye: 0xff2a10, claw: 0x0b0908, mouth: 0x8a0c0c };
+const VILLAIN_PAL = { body: 0x3e342a, dark: 0x5a1a10, belly: 0x9a8466, eye: 0xff2a10, claw: 0x0b0908, mouth: 0x7a0c0c };
 // Models ship as glTF JSON with base64 buffers. Some hosts (the web preview) block fetching data: URLs,
 // so decode the buffer here and hand the loader an in-memory GLB instead.
 function jsonToGlb(j) {
@@ -1204,6 +1218,56 @@ function jsonToGlb(j) {
   u8.set(jsonBytes, 20); u8.fill(0x20, 20 + jsonBytes.length, 20 + jsonBytes.length + jPad);
   if (bin.length) { const o = 20 + jsonBytes.length + jPad; dv.setUint32(o, bin.length + bPad, true); dv.setUint32(o + 4, 0x004e4942, true); u8.set(bin, o + 8); }
   return out;
+}
+/* realistic scaly hide for the rigged dinosaurs: a tileable scale pattern projected from three sides
+   (the models have no UVs), used for colour variation and as a fine bump so light catches every scale */
+let SCALE_TEX = null;
+function genScaleTex() {
+  const S = 512, cells = 22, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+  const pts = [], tint = [];
+  for (let y = 0; y < cells; y++) for (let x = 0; x < cells; x++) { pts.push([(x + 0.5 + R(-0.32, 0.32)) / cells, (y + 0.5 + R(-0.32, 0.32)) / cells]); tint.push(R(0.78, 1.0)); }
+  for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+    const u = px / S, v = py / S, cx = Math.floor(u * cells), cy = Math.floor(v * cells);
+    let d1 = 9, d2 = 9, id = 0;
+    for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+      const gx = (cx + ox + cells) % cells, gy = (cy + oy + cells) % cells, p = pts[gy * cells + gx];
+      const dx = p[0] + Math.floor((cx + ox) / cells) * 0 + (cx + ox - gx) / cells - u, dy = p[1] + (cy + oy - gy) / cells - v;
+      const dd = Math.sqrt(dx * dx + dy * dy);
+      if (dd < d1) { d2 = d1; d1 = dd; id = gy * cells + gx; } else if (dd < d2) d2 = dd;
+    }
+    const edge = (d2 - d1) * cells;                       // 0 at the groove between scales
+    const dome = Math.min(1, edge * 2.2), h = (0.18 + 0.82 * Math.pow(dome, 0.6)) * tint[id] * (0.92 + Math.random() * 0.08);
+    const k = (py * S + px) * 4, v8 = Math.round(h * 255); d[k] = d[k + 1] = d[k + 2] = v8; d[k + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = ANISO; return t;
+}
+function scaleSkin(mat, freq, bump) {
+  SCALE_TEX = SCALE_TEX || genScaleTex();
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uScales = { value: SCALE_TEX }; sh.uniforms.uFreq = { value: freq }; sh.uniforms.uBump = { value: bump };
+    sh.vertexShader = 'varying vec3 vObjPos; varying vec3 vObjN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vObjPos = position; vObjN = normal;');
+    sh.fragmentShader = 'uniform sampler2D uScales; uniform float uFreq; uniform float uBump; varying vec3 vObjPos; varying vec3 vObjN;\n' +
+      sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+        vec3 bw = pow(abs(normalize(vObjN)), vec3(4.0)); bw /= (bw.x + bw.y + bw.z);
+        vec3 sp = vObjPos * uFreq;
+        float sh_h = texture2D(uScales, sp.yz).r * bw.x + texture2D(uScales, sp.xz).r * bw.y + texture2D(uScales, sp.xy).r * bw.z;
+        float sh_big = texture2D(uScales, sp.xz * 0.13 + 0.37).r;
+        // fade detail out where scales shrink below a few pixels on screen (avoids shimmering noise)
+        float sh_fade = 1.0 - smoothstep(0.12, 0.45, length(fwidth(sp)) * 22.0);
+        diffuseColor.rgb *= mix(1.0, mix(0.6, 1.08, sh_h), 0.35 + 0.65 * sh_fade) * mix(0.86, 1.06, sh_big);`)
+      .replace('#include <normal_fragment_maps>', bump <= 0 ? '#include <normal_fragment_maps>' : `#include <normal_fragment_maps>
+        {
+          vec2 dH = vec2(dFdx(sh_h), dFdy(sh_h)) * sh_fade;
+          vec3 vSX = dFdx(-vViewPosition), vSY = dFdy(-vViewPosition);
+          vec3 R1 = cross(vSY, normal), R2 = cross(normal, vSX);
+          float fDet = dot(vSX, R1) * faceDirection;
+          vec3 vGrad = sign(fDet) * (dH.x * R1 + dH.y * R2);
+          normal = normalize(abs(fDet) * normal - vGrad * uBump);
+        }`);
+  };
+  mat.customProgramCacheKey = () => 'scales' + (bump > 0 ? 'b' : '');
 }
 function loadGLTF(url) {
   return fetch(url).then((r) => { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); })
@@ -1230,6 +1294,14 @@ function makeInstance(gltf, key, pal, height, rootScale, emissiveEyes) {
   const pivot = new THREE.Group(); pivot.add(m);
   pivot.rotation.y = PI - Math.atan2(dx, dz);
   const s = height / ((box.max.y - box.min.y) * 1.08 * rootScale);   // bones sit ~8% inside the skin
+  if (!spec.keep) {
+    let objMax = 0; m.traverse((o) => { if (o.isMesh) { o.geometry.computeBoundingBox(); const z = o.geometry.boundingBox.getSize(new THREE.Vector3()); objMax = Math.max(objMax, z.x, z.y, z.z); } });
+    const sceneMax = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z) * 1.08;
+    const unitsPerMetre = objMax / (sceneMax * s * rootScale);
+    const freq = 1 / (1.6 * unitsPerMetre);   // one texture tile = 1.6 m, so each scale is ~7 cm
+    for (const k of ['body', 'dark', 'belly']) scaleSkin(mats[k], freq, 0.0);
+    mats.body.roughness = 0.6; mats.dark.roughness = 0.55; mats.belly.roughness = 0.68;
+  }
   pivot.scale.setScalar(s);
   m.position.set(-c.x, -box.min.y, -c.z);
   const inst = { model: pivot, inner: m, mats, mixer: new THREE.AnimationMixer(m), actions: {}, anim: null, key, baseScale: s, keep: !!spec.keep };
@@ -1354,7 +1426,7 @@ function animateModel(rig, dt, want, ts) {
 /* wild dinosaurs grazing and wandering beside the road */
 const wild = [];
 async function initWildlife() {
-  const plan = [['trike', { body: 0x7a6a4a, dark: 0x5a3a2a, belly: 0xc8b48a }], ['trike', { body: 0x5e6a48, dark: 0x8a4a2a, belly: 0xbfae86 }], ['raptor', { body: 0x8a6a3a, dark: 0x2a2018, belly: 0xd8c09a, eye: 0xffb020 }], ['trex', { body: 0x4e5a34, dark: 0x2a3220, belly: 0xb8a878, eye: 0xffa020 }]];
+  const plan = [['trike', { body: 0x7a6a4a, dark: 0x5a3a2a, belly: 0xc8b48a }], ['trike', { body: 0x5e6a48, dark: 0x8a4a2a, belly: 0xbfae86 }], ['raptor', { body: 0x8a6a3a, dark: 0x2a2018, belly: 0xd8c09a, eye: 0xffb020 }]];
   for (const [key, pal] of plan) {
     try {
       const g = await loadGLTF(DINO_MODELS[key].url);
@@ -1774,8 +1846,8 @@ function updateGrass(dt) {
 /* adaptive resolution: keep the frame rate up on slower phones */
 const perf = { acc: 0, frames: 0, pr: 1, maxPr: 1, minPr: 0.6, shadowsOff: false };
 function initPerf() {
-  perf.maxPr = Math.min(window.devicePixelRatio || 1, settings.quality === 'high' ? 1.5 : 1);
-  perf.minPr = settings.quality === 'high' ? 0.7 : 0.55;
+  perf.maxPr = Math.min(window.devicePixelRatio || 1, settings.quality === 'high' ? 2 : 1);
+  perf.minPr = settings.quality === 'high' ? 0.8 : 0.55;
   perf.pr = perf.maxPr; perf.acc = 0; perf.frames = 0;
 }
 function tunePerf(rawDt) {

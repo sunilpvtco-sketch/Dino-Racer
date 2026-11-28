@@ -19,7 +19,7 @@ All third-party art in this folder and in `../textures` is free to use in this g
 
 All models were converted to self-contained glTF `.json` files (uncompressed) so the game and its web preview can load them.
 
-## Diano (realistic reptile) — supplied by the project owner
-- `reptile.json` — textured reptile mesh provided by the project owner (source/licence to be recorded here).
-  It came without a skeleton; it was auto-rigged for this game (31 bones), straightened from its
-  original S-curved pose, and given procedural Run, Walk, Idle, Jump, Attack and Death animations.
+
+## Smoothing and skin
+The raptor, T-Rex and Triceratops meshes were Loop-subdivided offline (skin weights blended) for rounded,
+non-faceted bodies, and are drawn with a procedural scaly-skin shader. No third-party art was added for this.
