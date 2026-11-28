@@ -234,6 +234,8 @@ button{font:inherit;color:inherit}
 #turnHint[data-dir="-1"] .r,#turnHint[data-dir="1"] .l{opacity:.25;animation:none}
 #turnHint[data-dir="-1"] .l,#turnHint[data-dir="1"] .r{animation:none;transform:scale(1.25);filter:drop-shadow(0 0 10px #ffd24a)}
 @keyframes pulseA{from{transform:scale(.9)}to{transform:scale(1.12)}}
+.studio{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);text-align:center;font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,244,220,.75)}
+.studio b{font-family:var(--font-d);font-weight:400;font-size:18px;letter-spacing:.08em;color:#ffd24a;text-transform:none}
 @media (prefers-reduced-motion:reduce){#hint .hand{animation:none}.btn,.switch::after{transition:none}}
 @media (min-height:760px){.btn{padding:15px 18px}}
 </style>
@@ -280,6 +282,7 @@ button{font:inherit;color:inherit}
     <div id="loadSub">Growing the jungle</div>
   </div>
   <div class="tagline">JUNGLE NEVER ENDS</div>
+  <div class="studio">Developed by <b>SK World</b></div>
 </section>
 
 <!-- Main menu -->

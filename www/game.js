@@ -99,6 +99,14 @@ function grassEdges(g, W, H, dark) {
     }
   }
 }
+function leafSpecksFine(g, W, H, n, hueA, hueB) {
+  for (let i = 0; i < n; i++) {
+    const x = R(0, W), y = R(0, H), s = R(1.6, 4.2), a = R(0, PI);
+    g.save(); g.translate(x, y); g.rotate(a);
+    g.fillStyle = hsl(R(hueA, hueB), R(30, 55), R(14, 34), R(0.55, 0.85));
+    g.beginPath(); g.ellipse(0, 0, s, s * 0.45, 0, 0, PI * 2); g.fill(); g.restore();
+  }
+}
 function leafSpecks(g, W, H, n, hueA, hueB) {
   for (let i = 0; i < n; i++) {
     const x = R(0, W), y = R(0, H), s = R(3, 8), a = R(0, PI);
@@ -177,9 +185,9 @@ function genTrail(dark) {
       g.stroke(); g.strokeStyle = 'rgba(255,220,170,.12)'; g.lineWidth = 2; g.stroke();
     });
   }
-  leafSpecks(g, W, H, dark ? 380 : 520, dark ? 15 : 20, dark ? 45 : 90);
+  leafSpecksFine(g, W, H, dark ? 900 : 1300, dark ? 15 : 20, dark ? 45 : 70);
   for (let i = 0; i < 160; i++) { const x = R(0, W), y = R(0, H), r = R(2, 5); g.fillStyle = hsl(R(25, 45), R(5, 15), R(25, 50)); g.beginPath(); g.ellipse(x, y, r, r * 0.7, R(0, 3), 0, PI * 2); g.fill(); }
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 0; i++) {
     const x = R(140, W - 140), y = R(0, H), rx = R(16, 34), ry = R(24, 60);
     tiled(W, H, x, y, ry, (X, Y) => { g.save(); g.translate(X, Y); g.scale(1, ry / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, dark ? '#3a3a44' : '#64746e'); gr.addColorStop(1, dark ? '#16141a' : '#2e2a22'); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, PI * 2); g.fill(); g.restore();
       rg.save(); rg.translate(X, Y); rg.scale(1, ry / rx); rg.fillStyle = '#404040'; rg.beginPath(); rg.arc(0, 0, rx, 0, PI * 2); rg.fill(); rg.restore(); });
@@ -573,10 +581,10 @@ function buildMaterials() {
   TEX.bark.repeat.set(2, 2);
   MAT.bark = std({ map: TEX.bark, roughness: 0.95 });
   MAT.palmBark = std({ map: TEX.palmBark, roughness: 0.9 });
-  MAT.frond = std({ map: TEX.frond, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.75 });
-  MAT.fern = std({ map: TEX.fern, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.8 });
-  MAT.banana = std({ map: TEX.banana, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6 });
-  MAT.grass = std({ map: TEX.grass, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9 });
+  MAT.frond = std({ map: TEX.frond, alphaTest: 0.3, alphaToCoverage: true, side: THREE.DoubleSide, roughness: 0.75 });
+  MAT.fern = std({ map: TEX.fern, alphaTest: 0.3, alphaToCoverage: true, side: THREE.DoubleSide, roughness: 0.8 });
+  MAT.banana = std({ map: TEX.banana, alphaTest: 0.3, alphaToCoverage: true, side: THREE.DoubleSide, roughness: 0.6 });
+  MAT.grass = std({ map: TEX.grass, alphaTest: 0.3, alphaToCoverage: true, side: THREE.DoubleSide, roughness: 0.9 });
   MAT.canopy = [0x1d5414, 0x2c7019, 0x153f0f, 0x3a8420].map((c) => std({ color: c, roughness: 0.85, flatShading: true }));
   MAT.bush = std({ color: 0x24591a, roughness: 0.85, flatShading: true });
   MAT.flower = std({ color: 0xe8333a, roughness: 0.5, emissive: 0x400000 });
@@ -840,10 +848,10 @@ const ZONES = ['jungle', 'waterfall', 'ruins', 'bridge', 'cave', 'horror'];
 const ZONE_NAMES = { jungle: 'JUNGLE PATH', waterfall: 'WATERFALL AREA', ruins: 'ANCIENT RUINS', bridge: 'WOODEN BRIDGE', cave: 'CAVE SECTION', horror: 'HAUNTED JUNGLE', night: 'NIGHT MODE' };
 const ZONE_LEN = 480, CHUNK = 24;
 const LIGHT = {
-  jungle: { top: 0x2f86d8, hor: 0xbfe2c6, fog: 0x8fb88e, near: 20, far: 132, sun: 0xfff0d2, si: 2.7, hs: 0xcfe8ff, hg: 0x2e3e1a, hi: 0.55, env: 0.45, pl: 0, mt: 0x4f7f68, exp: 0.9, sd: [-0.45, 0.8, 0.35], star: 0 },
-  waterfall: { top: 0x2a84e0, hor: 0xcfeaea, fog: 0x9fc6c6, near: 24, far: 138, sun: 0xfff6e2, si: 2.9, hs: 0xdff2ff, hg: 0x34462a, hi: 0.6, env: 0.5, pl: 0, mt: 0x5a8a88, exp: 0.92, sd: [0.4, 0.85, 0.3], star: 0 },
-  ruins: { top: 0x3a4a8a, hor: 0xffa55a, fog: 0xc48a62, near: 18, far: 128, sun: 0xffb26e, si: 2.7, hs: 0xffd2a8, hg: 0x40301c, hi: 0.5, env: 0.4, pl: 0, mt: 0x86584a, exp: 0.92, sd: [-0.7, 0.35, -0.6], star: 0 },
-  bridge: { top: 0x3486dc, hor: 0xd6eae4, fog: 0xa9c8bd, near: 18, far: 128, sun: 0xfff3dc, si: 2.8, hs: 0xe0f0ff, hg: 0x34442e, hi: 0.6, env: 0.5, pl: 0, mt: 0x6a9088, exp: 0.92, sd: [0.5, 0.8, 0.25], star: 0 },
+  jungle: { top: 0x2f86d8, hor: 0xbfe2c6, fog: 0x8fb88e, near: 38, far: 140, sun: 0xfff0d2, si: 2.7, hs: 0xcfe8ff, hg: 0x2e3e1a, hi: 0.55, env: 0.45, pl: 0, mt: 0x4f7f68, exp: 0.9, sd: [-0.45, 0.8, 0.35], star: 0 },
+  waterfall: { top: 0x2a84e0, hor: 0xcfeaea, fog: 0x9fc6c6, near: 40, far: 145, sun: 0xfff6e2, si: 2.9, hs: 0xdff2ff, hg: 0x34462a, hi: 0.6, env: 0.5, pl: 0, mt: 0x5a8a88, exp: 0.92, sd: [0.4, 0.85, 0.3], star: 0 },
+  ruins: { top: 0x3a4a8a, hor: 0xffa55a, fog: 0xc48a62, near: 34, far: 135, sun: 0xffb26e, si: 2.7, hs: 0xffd2a8, hg: 0x40301c, hi: 0.5, env: 0.4, pl: 0, mt: 0x86584a, exp: 0.92, sd: [-0.7, 0.35, -0.6], star: 0 },
+  bridge: { top: 0x3486dc, hor: 0xd6eae4, fog: 0xa9c8bd, near: 34, far: 135, sun: 0xfff3dc, si: 2.8, hs: 0xe0f0ff, hg: 0x34442e, hi: 0.6, env: 0.5, pl: 0, mt: 0x6a9088, exp: 0.92, sd: [0.5, 0.8, 0.25], star: 0 },
   horror: { top: 0x150f1e, hor: 0x3a2a36, fog: 0x1d2220, near: 7, far: 62, sun: 0xb08ac0, si: 0.55, hs: 0x5a5a8a, hg: 0x141008, hi: 0.4, env: 0.18, pl: 2.2, mt: 0x141418, exp: 1.12, sd: [-0.6, 0.35, -0.5], star: 0.5 },
   cave: { top: 0x04060c, hor: 0x0a1426, fog: 0x060b16, near: 6, far: 58, sun: 0x6a8cff, si: 0.25, hs: 0x4a6ab0, hg: 0x120c08, hi: 0.45, env: 0.18, pl: 2.6, mt: 0x10141c, exp: 1.15, sd: [0, 1, 0.2], star: 0 },
   night: { top: 0x040a1e, hor: 0x1b3050, fog: 0x0f1d2e, near: 14, far: 110, sun: 0xa3bcff, si: 0.9, hs: 0x5a78c0, hg: 0x10140c, hi: 0.45, env: 0.3, pl: 1.6, mt: 0x18263a, exp: 1.15, sd: [0.45, 0.75, -0.5], star: 1 }
@@ -966,7 +974,7 @@ function buildChunk(zone) {
       for (let i = 0; i < 3; i++) { const x = s * R(7, 11), z = -R(0, 24); Math.random() < 0.4 ? palm(g, x, z) : tree(g, x, z, R(0.8, 1.05)); }
       for (let i = 0; i < 2; i++) { const x = s * R(13, 30), z = -R(0, 24); Math.random() < 0.3 ? palm(g, x, z, R(8, 11)) : tree(g, x, z, R(1.0, 1.4)); }
       for (let i = 0; i < 2; i++) bush(g, s * R(5.5, 9), -R(0, 24), R(0.9, 1.4));
-      if (Math.random() < 0.5) prop(g, pick(['stump', 'log', 'rock_large']), s * R(4.6, 7), -R(1, 23), R(0.5, 0.9));
+      if (Math.random() < 0.5) rock(g, s * R(4.8, 7.5), -R(1, 23), R(0.4, 0.8));
       for (let i = 0; i < 2; i++) banana(g, s * R(7, 11), -R(0, 24), R(1, 1.4));
       if (Math.random() < 0.6) rock(g, s * R(4.6, 9), -R(0, 24), R(0.5, 1.3));
       if (Math.random() < 0.25) torch(g, s * 4.3, -R(3, 21));
@@ -1517,7 +1525,7 @@ async function loadScenery() {
   }));
   await Promise.all(['oak', 'ash', 'aspen', 'pine'].map(async (l) => {
     const map = await loadTex(`textures/leaves_${l}.png`);
-    leaves[l] = std({ map, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.8, color: 0xc8dcb0 });
+    leaves[l] = std({ map, alphaTest: 0.3, alphaToCoverage: true, side: THREE.DoubleSide, roughness: 0.8, color: 0xc8dcb0 });
   }));
   await Promise.all(['oak_a', 'oak_b', 'ash', 'aspen', 'pine', 'bush'].map(async (n) => {
     try {
@@ -2008,8 +2016,9 @@ function updateGrass(dt) {
 /* adaptive resolution: keep the frame rate up on slower phones */
 const perf = { acc: 0, frames: 0, pr: 1, maxPr: 1, minPr: 0.6, shadowsOff: false };
 function initPerf() {
-  perf.maxPr = Math.min(window.devicePixelRatio || 1, settings.quality === 'high' ? 2 : 1);
-  perf.minPr = settings.quality === 'high' ? 0.8 : 0.55;
+  perf.maxPr = Math.min(window.devicePixelRatio || 1, settings.quality === 'high' ? 2.5 : 1.25);
+  perf.minPr = Math.min(perf.maxPr, settings.quality === 'high' ? 1.25 : 1);
+  perf.grassCut = false;
   perf.pr = perf.maxPr; perf.acc = 0; perf.frames = 0;
 }
 function tunePerf(rawDt) {
@@ -2018,9 +2027,13 @@ function tunePerf(rawDt) {
   if (perf.acc < 2) return;
   const fps = perf.frames / perf.acc; perf.acc = 0; perf.frames = 0;
   let pr = perf.pr;
-  if (fps < 48 && pr > perf.minPr) pr = Math.max(perf.minPr, pr - 0.15);
-  else if (fps > 58 && pr < perf.maxPr) pr = Math.min(perf.maxPr, pr + 0.1);
-  else if (fps < 38 && pr <= perf.minPr && !perf.shadowsOff && sun.castShadow) { perf.shadowsOff = true; sun.castShadow = false; }
+  if (fps < 48) {
+    // cheapest visual losses first: very high density, then shadows, then grass, then resolution
+    if (pr > Math.max(perf.minPr, 1.75)) pr = Math.max(perf.minPr, 1.75, pr - 0.25);
+    else if (!perf.shadowsOff && sun.castShadow) { perf.shadowsOff = true; sun.castShadow = false; }
+    else if (!perf.grassCut && grassMesh) { perf.grassCut = true; grassMesh.count = Math.floor(grassMesh.count * 0.55); }
+    else if (pr > perf.minPr) pr = Math.max(perf.minPr, pr - 0.15);
+  } else if (fps > 58 && pr < perf.maxPr) pr = Math.min(perf.maxPr, pr + 0.1);
   if (pr !== perf.pr) { perf.pr = pr; renderer.setPixelRatio(pr); resize(); }
 }
 
