@@ -157,6 +157,41 @@ function genMud() {
   grassEdges(g, W, H, false);
   return { map: tex(c, { repeat: true }), rough: tex(rc, { repeat: true, srgb: false }) };
 }
+function genTrail(dark) {
+  // a worn jungle footpath: packed earth, leaf litter, roots and ragged grassy edges (no painted lanes)
+  const W = 512, H = 1024, [c, g] = mkHD(W, H), [rc, rg] = mk(W, H);
+  g.fillStyle = dark ? '#2e2218' : '#5c4128'; g.fillRect(0, 0, W, H); rg.fillStyle = '#e8e8e8'; rg.fillRect(0, 0, W, H);
+  for (let i = 0; i < 220; i++) { const x = R(0, W), y = R(0, H), r = R(25, 90); tiled(W, H, x, y, r, (X, Y) => blob(g, X, Y, r, hsl(R(18, 34), R(25, 45), dark ? R(8, 18) : R(18, 38), 0.35), 'rgba(0,0,0,0)')); }
+  // packed centre where feet wear the soil
+  const gc = g.createLinearGradient(0, 0, W, 0); gc.addColorStop(0.15, 'rgba(0,0,0,0)'); gc.addColorStop(0.5, dark ? 'rgba(70,50,35,.25)' : 'rgba(140,105,70,.28)'); gc.addColorStop(0.85, 'rgba(0,0,0,0)');
+  g.fillStyle = gc; g.fillRect(0, 0, W, H);
+  speckle(g, W, H, 5000, () => hsl(R(18, 36), R(20, 40), dark ? R(6, 22) : R(12, 42), R(0.4, 0.8)));
+  // roots snaking across
+  g.lineCap = 'round';
+  for (let i = 0; i < 7; i++) {
+    const y0 = R(0, H), side = Math.random() < 0.5 ? 0 : W, len = R(80, 260);
+    tiled(W, H, side ? W - len / 2 : len / 2, y0, len, (X, Y) => {
+      g.strokeStyle = dark ? 'rgba(30,20,12,.9)' : 'rgba(70,45,24,.9)'; g.lineWidth = R(5, 11);
+      g.beginPath(); let x = side ? W + 10 : -10, y = Y; g.moveTo(x, y);
+      for (let k = 0; k < 6; k++) { x += (side ? -1 : 1) * len / 6; y += R(-14, 14); g.lineTo(x, y); }
+      g.stroke(); g.strokeStyle = 'rgba(255,220,170,.12)'; g.lineWidth = 2; g.stroke();
+    });
+  }
+  leafSpecks(g, W, H, dark ? 380 : 520, dark ? 15 : 20, dark ? 45 : 90);
+  for (let i = 0; i < 160; i++) { const x = R(0, W), y = R(0, H), r = R(2, 5); g.fillStyle = hsl(R(25, 45), R(5, 15), R(25, 50)); g.beginPath(); g.ellipse(x, y, r, r * 0.7, R(0, 3), 0, PI * 2); g.fill(); }
+  for (let i = 0; i < 3; i++) {
+    const x = R(140, W - 140), y = R(0, H), rx = R(16, 34), ry = R(24, 60);
+    tiled(W, H, x, y, ry, (X, Y) => { g.save(); g.translate(X, Y); g.scale(1, ry / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, dark ? '#3a3a44' : '#64746e'); gr.addColorStop(1, dark ? '#16141a' : '#2e2a22'); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, PI * 2); g.fill(); g.restore();
+      rg.save(); rg.translate(X, Y); rg.scale(1, ry / rx); rg.fillStyle = '#404040'; rg.beginPath(); rg.arc(0, 0, rx, 0, PI * 2); rg.fill(); rg.restore(); });
+  }
+  // ragged overgrown edges that blend into the forest floor
+  for (const side of [0, 1]) for (let y = 0; y < H; y += 6) {
+    const w = 18 + Math.sin(y * 0.031) * 14 + Math.sin(y * 0.11) * 8 + R(0, 10);
+    for (let k = 0; k < 3; k++) { g.strokeStyle = hsl(R(70, 105), R(30, 55), dark ? R(8, 18) : R(16, 34), 0.85); g.lineWidth = R(1.5, 3); const x0 = side ? W - R(0, w) : R(0, w); g.beginPath(); g.moveTo(x0, y); g.lineTo(x0 + R(-6, 6) + (side ? -1 : 1) * R(4, 12), y - R(6, 16)); g.stroke(); }
+    g.fillStyle = dark ? 'rgba(18,24,12,.35)' : 'rgba(40,58,22,.3)'; g.fillRect(side ? W - w : 0, y, w, 6);
+  }
+  return { map: tex(c, { repeat: true }), rough: tex(rc, { repeat: true, srgb: false }) };
+}
 function genStones({ rowH = 64, wMin = 50, wMax = 82, hue = [30, 48], sat = [6, 14], lit = [36, 56], moss = 0.6, mortar = '#3a3427', W = 512, H = 1024, edge = true, slab = false }) {
   const [c, g] = mkHD(W, H), [rc, rg] = mk(W, H);
   g.fillStyle = mortar; g.fillRect(0, 0, W, H); rg.fillStyle = '#f0f0f0'; rg.fillRect(0, 0, W, H);
@@ -512,7 +547,7 @@ const MAT = {}, TEX = {};
 let roadMats = {};
 
 function buildMaterials() {
-  TEX.mud = genMud();
+  TEX.mud = genMud(); TEX.trail = genTrail(false); TEX.trailDark = genTrail(true);
   TEX.cobble = genStones({ rowH: 60, wMin: 46, wMax: 80, lit: [36, 54], moss: 0.8 });
   TEX.slab = genStones({ rowH: 128, wMin: 110, wMax: 170, hue: [35, 48], sat: [10, 20], lit: [42, 60], moss: 1.1, mortar: '#3d3322', slab: true });
   TEX.plank = genPlanks();
@@ -527,9 +562,14 @@ function buildMaterials() {
   TEX.blocks = genStones({ W: 256, H: 256, rowH: 64, wMin: 70, wMax: 110, hue: [35, 50], sat: [8, 16], lit: [40, 58], moss: 0.9, mortar: '#2f2a1f', edge: false, slab: true });
 
   const road = (t, o = {}) => { t.map.repeat.set(1, 2); t.rough.repeat.set(1, 2); return std({ map: t.map, roughnessMap: t.rough, roughness: 1, metalness: 0, ...o }); };
-  roadMats = { jungle: road(TEX.mud), waterfall: road(TEX.cobble), ruins: road(TEX.slab), bridge: road(TEX.plank), cave: road(TEX.cave) };
+  roadMats = { jungle: road(TEX.trail), horror: road(TEX.trailDark), waterfall: road(TEX.cobble), ruins: road(TEX.slab), bridge: road(TEX.plank), cave: road(TEX.cave) };
   TEX.ground.repeat.set(6, 3.6);
   MAT.ground = std({ map: TEX.ground, roughness: 1 });
+  TEX.groundDark = genGround(true); TEX.groundDark.repeat.set(6, 3.6);
+  MAT.groundDark = std({ map: TEX.groundDark, roughness: 1, color: 0x8a8a90 });
+  MAT.deadBark = std({ map: TEX.bark, color: 0x6a5e56, roughness: 1 });
+  MAT.glowEye = new THREE.MeshBasicMaterial({ color: 0xff2a10, fog: false });
+  MAT.glowEyeG = new THREE.MeshBasicMaterial({ color: 0x9aff3a, fog: false });
   TEX.bark.repeat.set(2, 2);
   MAT.bark = std({ map: TEX.bark, roughness: 0.95 });
   MAT.palmBark = std({ map: TEX.palmBark, roughness: 0.9 });
@@ -572,9 +612,9 @@ function buildMaterials() {
   MAT.coinFace = std({ map: TEX.coin, metalness: 0.85, roughness: 0.28, emissive: 0x3a2400, emissiveMap: TEX.coin, emissiveIntensity: 0.6 });
   MAT.coinEdge = std({ color: 0xe8a510, metalness: 0.9, roughness: 0.25, emissive: 0x3a2000 });
   MAT.signs = {};
-  const signTxt = { jungle: ['JUNGLE PATH', 'RUN!'], waterfall: ['WATERFALL', 'AREA'], ruins: ['ANCIENT', 'RUINS'], bridge: ['WOODEN', 'BRIDGE'], cave: ['DANGER', 'CAVE AHEAD'] };
+  const signTxt = { jungle: ['JUNGLE PATH', 'RUN!'], waterfall: ['WATERFALL', 'AREA'], ruins: ['ANCIENT', 'RUINS'], bridge: ['WOODEN', 'BRIDGE'], cave: ['DANGER', 'CAVE AHEAD'], horror: ['HAUNTED', 'JUNGLE'] };
   signTxt.turn = ['<  TURN  >', 'LEFT OR RIGHT'];
-  for (const k in signTxt) MAT.signs[k] = std({ map: genSign(signTxt[k], { color: k === 'cave' ? '#ff5a3a' : '#ffcf4a' }), roughness: 0.85 });
+  for (const k in signTxt) MAT.signs[k] = std({ map: genSign(signTxt[k], { color: k === 'cave' || k === 'horror' ? '#ff4a2a' : '#ffcf4a' }), roughness: 0.85 });
 }
 
 /* ------------------------------------------------------------ geometry helpers */
@@ -796,20 +836,29 @@ function statue(g, x, z) {
 function cliff(g, x, z, h, w) { for (let i = 0; i < 3; i++) { const r = M(pick(G.rocks), MAT.cliff, x + R(-1, 1), h * R(0.35, 0.55), z + R(-4, 4), w * R(0.8, 1.2), h * R(0.5, 0.7), R(4, 7), 0, R(0, 3), 0); r.castShadow = false; g.add(r); } g.add(M(pick(G.blobs), pick(MAT.canopy), x, h * 0.95, z, w * 0.8, 1.2, 5)); if (TREES.pine) for (let i = 0; i < 2; i++) placeParts(g, TREES.pine, x + R(-3, 3), h * 0.9, z + R(-4, 4), R(6, 9), R(0, 6), false); }
 
 /* ------------------------------------------------------------ zones */
-const ZONES = ['jungle', 'waterfall', 'ruins', 'bridge', 'cave'];
-const ZONE_NAMES = { jungle: 'JUNGLE PATH', waterfall: 'WATERFALL AREA', ruins: 'ANCIENT RUINS', bridge: 'WOODEN BRIDGE', cave: 'CAVE SECTION', night: 'NIGHT MODE' };
+const ZONES = ['jungle', 'waterfall', 'ruins', 'bridge', 'cave', 'horror'];
+const ZONE_NAMES = { jungle: 'JUNGLE PATH', waterfall: 'WATERFALL AREA', ruins: 'ANCIENT RUINS', bridge: 'WOODEN BRIDGE', cave: 'CAVE SECTION', horror: 'HAUNTED JUNGLE', night: 'NIGHT MODE' };
 const ZONE_LEN = 480, CHUNK = 24;
 const LIGHT = {
   jungle: { top: 0x2f86d8, hor: 0xbfe2c6, fog: 0x8fb88e, near: 20, far: 132, sun: 0xfff0d2, si: 2.7, hs: 0xcfe8ff, hg: 0x2e3e1a, hi: 0.55, env: 0.45, pl: 0, mt: 0x4f7f68, exp: 0.9, sd: [-0.45, 0.8, 0.35], star: 0 },
   waterfall: { top: 0x2a84e0, hor: 0xcfeaea, fog: 0x9fc6c6, near: 24, far: 138, sun: 0xfff6e2, si: 2.9, hs: 0xdff2ff, hg: 0x34462a, hi: 0.6, env: 0.5, pl: 0, mt: 0x5a8a88, exp: 0.92, sd: [0.4, 0.85, 0.3], star: 0 },
   ruins: { top: 0x3a4a8a, hor: 0xffa55a, fog: 0xc48a62, near: 18, far: 128, sun: 0xffb26e, si: 2.7, hs: 0xffd2a8, hg: 0x40301c, hi: 0.5, env: 0.4, pl: 0, mt: 0x86584a, exp: 0.92, sd: [-0.7, 0.35, -0.6], star: 0 },
   bridge: { top: 0x3486dc, hor: 0xd6eae4, fog: 0xa9c8bd, near: 18, far: 128, sun: 0xfff3dc, si: 2.8, hs: 0xe0f0ff, hg: 0x34442e, hi: 0.6, env: 0.5, pl: 0, mt: 0x6a9088, exp: 0.92, sd: [0.5, 0.8, 0.25], star: 0 },
+  horror: { top: 0x150f1e, hor: 0x3a2a36, fog: 0x1d2220, near: 7, far: 62, sun: 0xb08ac0, si: 0.55, hs: 0x5a5a8a, hg: 0x141008, hi: 0.4, env: 0.18, pl: 2.2, mt: 0x141418, exp: 1.12, sd: [-0.6, 0.35, -0.5], star: 0.5 },
   cave: { top: 0x04060c, hor: 0x0a1426, fog: 0x060b16, near: 6, far: 58, sun: 0x6a8cff, si: 0.25, hs: 0x4a6ab0, hg: 0x120c08, hi: 0.45, env: 0.18, pl: 2.6, mt: 0x10141c, exp: 1.15, sd: [0, 1, 0.2], star: 0 },
   night: { top: 0x040a1e, hor: 0x1b3050, fog: 0x0f1d2e, near: 14, far: 110, sun: 0xa3bcff, si: 0.9, hs: 0x5a78c0, hg: 0x10140c, hi: 0.45, env: 0.3, pl: 1.6, mt: 0x18263a, exp: 1.15, sd: [0.45, 0.75, -0.5], star: 1 }
 };
 
 function roadEdges(g, zone) {
   const y = 0.012;
+  if (zone === 'jungle' || zone === 'horror') {
+    for (const s of [-1, 1]) {
+      for (let z = -R(1, 4); z > -24; z -= R(3, 7)) { const r = M(G.cyl, MAT.bark, s * R(3.3, 4.2), 0.05, z, 0.07, R(1, 2.2), 0.07, PI / 2, R(-0.7, 0.7), 0); r.rotation.order = 'YXZ'; g.add(r); }
+      if (zone === 'horror') for (let z = -R(2, 6); z > -24; z -= R(6, 11)) skull(g, s * R(3.6, 4.3), 0.12, z, R(0.18, 0.26), R(-0.5, 0.5));
+      else for (let z = -R(1, 4); z > -24; z -= R(4, 8)) fern(g, s * R(3.7, 4.2), z, R(0.5, 0.8));
+    }
+    return;
+  }
   for (const lx of [-1, 1]) for (let z = -1.2; z > -24; z -= 3) g.add(M(G.plane, MAT.laneMark, lx, y, z, 0.11, 1.5, 1, -PI / 2, 0, 0));
   for (const s of [-1, 1]) {
     const x = s * 3.66;
@@ -828,6 +877,33 @@ function roadEdges(g, zone) {
       g.add(M(G.box, MAT.wood, x, 0.1, -12, 0.2, 0.2, 24));
     }
   }
+}
+function skull(g, x, y, z, s = 0.25, ry = 0) {
+  g.add(M(G.sph, MAT.bone, x, y + s * 0.55, z, s * 0.62, s * 0.55, s * 0.7, 0, ry, 0));
+  g.add(M(G.box, MAT.bone, x + Math.sin(ry) * -s * 0.42, y + s * 0.2, z + Math.cos(ry) * -s * 0.42, s * 0.5, s * 0.28, s * 0.4, 0, ry, 0));
+  for (const e of [-1, 1]) g.add(M(G.sph, MAT.hole, x + Math.cos(ry) * e * s * 0.22 - Math.sin(ry) * s * 0.5, y + s * 0.6, z - Math.sin(ry) * e * s * 0.22 - Math.cos(ry) * s * 0.5, s * 0.14, s * 0.15, s * 0.1));
+}
+function deadTree(g, x, z, s = 1) {
+  const list = ['oak_a', 'oak_b', 'ash'].filter((k) => TREES[k]);
+  if (list.length) {
+    const bark = TREES[pick(list)].filter((p) => !(p.mat.alphaTest > 0));
+    for (const p of bark) { const m = M(p.geo, MAT.deadBark, x, 0, z, 9 * s, 9 * s * R(0.9, 1.2), 9 * s, 0, R(0, PI * 2), R(-0.08, 0.08)); m.castShadow = Math.abs(x) < 12; g.add(m); }
+  } else g.add(M(G.cylT, MAT.deadBark, x, 3 * s, z, 0.3 * s, 6 * s, 0.3 * s));
+  for (let i = 0; i < 3; i++) { const l = R(1, 3); g.add(M(G.cyl, MAT.vine, x + R(-1.5, 1.5) * s, R(3.5, 6) * s - l / 2, z + R(-1.5, 1.5) * s, 0.03, l, 0.03)); }
+}
+function horrorSide(g, s) {
+  g.add(M(G.side, MAT.groundDark, s * 23.6, -0.02, 0));
+  for (let i = 0; i < 3; i++) deadTree(g, s * R(5.5, 11), -R(0, 24), R(0.8, 1.1));
+  for (let i = 0; i < 3; i++) deadTree(g, s * R(13, 28), -R(0, 24), R(1, 1.4));
+  for (let i = 0; i < 4; i++) fern(g, s * R(4.4, 8), -R(0, 24), R(0.6, 1));
+  if (Math.random() < 0.7) { const x = s * R(4.6, 6.5), z = -R(2, 22); g.add(M(G.cyl, MAT.wood, x, 0.9, z, 0.05, 1.8, 0.05, 0, 0, s * R(0.02, 0.12))); skull(g, x, 1.72, z, 0.3, s > 0 ? PI / 2 + 0.4 : -PI / 2 - 0.4); }
+  if (Math.random() < 0.6) { const x = s * R(6, 10), z = -R(2, 22); for (let k = 0; k < 4; k++) g.add(M(G.torus, MAT.bone, x, 0.05, z + k * 0.22, 0.5, 0.45, 0.5, 0, PI / 2 * s, 0)); }
+  // something watching from the trees
+  for (let i = 0; i < 2; i++) {
+    const x = s * R(9, 18), y = R(0.5, 2.2), z = -R(0, 24), m = Math.random() < 0.7 ? MAT.glowEye : MAT.glowEyeG;
+    for (const e of [-0.13, 0.13]) g.add(M(G.sph, m, x, y, z + e, 0.045, 0.03, 0.045));
+  }
+  if (Math.random() < 0.35) torch(g, s * 4.4, -R(4, 20));
 }
 function buildChunk(zone) {
   const g = new THREE.Group();
@@ -884,7 +960,7 @@ function buildChunk(zone) {
     }
     g.add(M(G.side, MAT.ground, s * 23.6, -0.02, 0));
     if (zone === 'jungle' || zone === 'waterfall') {
-      if (Math.random() < 0.7) fence(g, s);
+      if (zone === 'waterfall' && Math.random() < 0.7) fence(g, s);
       for (let i = 0; i < 7; i++) { const x = s * R(4.3, 7), z = -R(0, 24); const r = Math.random(); r < 0.35 ? fern(g, x, z) : r < 0.6 ? grass(g, x, z) : r < 0.8 ? bush(g, x, z) : banana(g, x, z); }
       for (let i = 0; i < 6; i++) grass(g, s * R(3.9, 4.6), -R(0, 24), R(0.5, 0.9));
       for (let i = 0; i < 3; i++) { const x = s * R(7, 11), z = -R(0, 24); Math.random() < 0.4 ? palm(g, x, z) : tree(g, x, z, R(0.8, 1.05)); }
@@ -894,6 +970,8 @@ function buildChunk(zone) {
       for (let i = 0; i < 2; i++) banana(g, s * R(7, 11), -R(0, 24), R(1, 1.4));
       if (Math.random() < 0.6) rock(g, s * R(4.6, 9), -R(0, 24), R(0.5, 1.3));
       if (Math.random() < 0.25) torch(g, s * 4.3, -R(3, 21));
+    } else if (zone === 'horror') {
+      g.children.pop(); horrorSide(g, s);
     } else if (zone === 'ruins') {
       pillar(g, s * 4.7, -4); pillar(g, s * 4.7, -16);
       if (Math.random() < 0.5) statue(g, s * 7.2, -R(4, 20));
@@ -938,6 +1016,16 @@ function buildPortal(zone) {
     for (let i = 0; i < 4; i++) g.add(M(G.box, MAT.stone, 0, 11 + i * 0.8, 0, 10 - i * 2.4, 0.8, 1.9 - i * 0.2));
     const before = g.children.length; statue(g, 0.5, -0.1); g.children.slice(before).forEach((m) => { m.position.y += 13; m.position.x -= 0.5; });
     for (let i = 0; i < 10; i++) g.add(M(pick(G.blobs), pick(MAT.canopy), R(-14, 14), R(6, 9), R(-1, 1), R(1, 2.2), 0.8, 1.4));
+  } else if (zone === 'horror') {
+    for (const s of [-1, 1]) {
+      g.add(M(G.cylT, MAT.deadBark, s * 4.3, 2.6, 0, 0.25, 5.2, 0.25));
+      for (let k = 0; k < 3; k++) skull(g, s * 4.3, 4.8 - k * 0.55, 0.2, 0.32, 0);
+      torch(g, s * 3.9, 1.2);
+      for (let i = 0; i < 3; i++) deadTree(g, s * R(7, 14), R(-6, 2), R(1.1, 1.5));
+    }
+    for (let i = 0; i < 7; i++) g.add(M(G.torus, MAT.bone, 0, 5.4 - i * 0.02, -0.05 + i * 0.06, 4.3, 1.1, 1, 0, 0, 0));
+    for (let i = -3; i <= 3; i++) { const l = R(0.6, 1.6); g.add(M(G.cyl, MAT.vine, i * 1.1, 5.2 - l / 2, 0.1, 0.03, l, 0.03)); if (i % 2 === 0) skull(g, i * 1.1, 4.8 - l, 0.1, 0.2, 0); }
+    sign(g, 5.4, -1.2, MAT.signs.horror, 1.8);
   } else if (zone === 'bridge') {
     for (const s of [-1, 1]) { g.add(M(G.box, MAT.wood, s * 4.1, 2.4, 0, 0.45, 4.8, 0.45)); g.add(M(G.cone, MAT.wood, s * 4.1, 5.0, 0, 0.32, 0.5, 0.32)); torch(g, s * 4.1, 0.55, 2.6); }
     g.add(M(G.box, MAT.wood, 0, 4.4, 0, 8.8, 0.35, 0.35));
@@ -966,6 +1054,7 @@ const OBS = {
   pillar: { kind: 'block', w: 1.4, d: 1.4 }
 };
 const OBSETS = {
+  horror: { jump: ['bones', 'log', 'spikes'], block: ['rock', 'pillar'], slide: ['branch', 'gate'] },
   jungle: { jump: ['log', 'log', 'bones'], block: ['rock', 'cart', 'crate'], slide: ['branch'] },
   waterfall: { jump: ['log', 'spikes'], block: ['rock', 'boulder'], slide: ['branch'] },
   ruins: { jump: ['spikes', 'bones'], block: ['wall', 'pillar'], slide: ['gate'] },
@@ -1269,6 +1358,77 @@ function scaleSkin(mat, freq, bump) {
   };
   mat.customProgramCacheKey = () => 'scales' + (bump > 0 ? 'b' : '');
 }
+/* reptile eyes: amber iris, vertical slit pupil, glossy cornea, mounted on the head bone */
+let EYE_TEX = null;
+function genEyeTex() {
+  const S = 256, [c, g] = mk(S, S), m = S / 2;
+  let gr = g.createRadialGradient(m, m, 0, m, m, m);
+  gr.addColorStop(0, '#ffe27a'); gr.addColorStop(0.45, '#f2a51c'); gr.addColorStop(0.8, '#b05a08'); gr.addColorStop(0.97, '#3a1a02'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(m, m, m, 0, PI * 2); g.fill();
+  for (let i = 0; i < 90; i++) { const a = R(0, PI * 2), r1 = R(0.18, 0.4) * m, r2 = R(0.6, 0.92) * m; g.strokeStyle = `rgba(${R(80, 140) | 0},${R(30, 60) | 0},0,${R(0.15, 0.4)})`; g.lineWidth = R(1, 2.5); g.beginPath(); g.moveTo(m + Math.cos(a) * r1, m + Math.sin(a) * r1); g.lineTo(m + Math.cos(a) * r2, m + Math.sin(a) * r2); g.stroke(); }
+  g.fillStyle = '#050302'; g.beginPath(); g.ellipse(m, m, m * 0.11, m * 0.62, 0, 0, PI * 2); g.fill();
+  return tex(c);
+}
+function addEyes(m, emissive) {
+  const head = m.getObjectByName('Head'); if (!head) return;
+  let mesh = null; m.traverse((o) => { if (o.isSkinnedMesh && !mesh) mesh = o; });
+  if (!mesh) return;
+  const bones = mesh.skeleton.bones, hi = bones.indexOf(head); if (hi < 0) return;
+  // CPU-skin the vertices that belong to the head (same maths as the GPU), in the model's own space
+  const pts = [], v = new THREE.Vector4(), acc = new THREE.Vector4(), tmp = new THREE.Vector4(), bm = new THREE.Matrix4();
+  m.traverse((o) => {
+    if (!o.isSkinnedMesh) return;
+    const P = o.geometry.attributes.position, SI = o.geometry.attributes.skinIndex, SW = o.geometry.attributes.skinWeight;
+    const bi = o.skeleton.bones.indexOf(head);
+    for (let i = 0; i < P.count; i++) {
+      let wh = 0; for (let k = 0; k < 4; k++) if (SI.getComponent ? false : false) {}
+      const idx = [SI.getX(i), SI.getY(i), SI.getZ(i), SI.getW(i)], w = [SW.getX(i), SW.getY(i), SW.getZ(i), SW.getW(i)];
+      for (let k = 0; k < 4; k++) if (idx[k] === bi) wh += w[k];
+      if (wh < 0.6) continue;
+      v.set(P.getX(i), P.getY(i), P.getZ(i), 1).applyMatrix4(o.bindMatrix); acc.set(0, 0, 0, 0);
+      for (let k = 0; k < 4; k++) { if (!w[k]) continue; bm.multiplyMatrices(o.skeleton.bones[idx[k]].matrixWorld, o.skeleton.boneInverses[idx[k]]); tmp.copy(v).applyMatrix4(bm).multiplyScalar(w[k]); acc.add(tmp); }
+      acc.applyMatrix4(o.bindMatrixInverse).applyMatrix4(o.matrixWorld);
+      pts.push(new THREE.Vector3(acc.x, acc.y, acc.z));
+    }
+  });
+  if (pts.length < 20) return;
+  const hp = head.getWorldPosition(new THREE.Vector3());
+  let tip = pts[0]; for (const p of pts) if (p.distanceToSquared(hp) > tip.distanceToSquared(hp)) tip = p;
+  const f = tip.clone().sub(hp).normalize(), up = new THREE.Vector3(0, 1, 0); up.sub(f.clone().multiplyScalar(up.dot(f))).normalize();
+  const lat = new THREE.Vector3().crossVectors(f, up).normalize();
+  let fmin = 1e9, fmax = -1e9; for (const p of pts) { const d = p.clone().sub(hp).dot(f); fmin = Math.min(fmin, d); fmax = Math.max(fmax, d); }
+  const L = fmax - fmin, fe = fmin + L * 0.38;
+  const slice = pts.filter((p) => Math.abs(p.clone().sub(hp).dot(f) - fe) < L * 0.07);
+  if (!slice.length) return;
+  const us = slice.map((p) => p.clone().sub(hp).dot(up)), umax = Math.max(...us), umin = Math.min(...us), ue = umin + (umax - umin) * 0.72;
+  const band = slice.filter((p, i) => Math.abs(us[i] - ue) < (umax - umin) * 0.15);
+  EYE_TEX = EYE_TEX || genEyeTex();
+  // one glossy eyeball; the iris texture is projected onto its front half
+  const ball = new THREE.MeshStandardMaterial({ map: EYE_TEX, color: 0xffffff, roughness: 0.03, metalness: 0.05, envMapIntensity: 1.4,
+    emissive: emissive ? 0xff2a10 : 0x6a3a00, emissiveMap: EYE_TEX, emissiveIntensity: emissive ? 1.6 : 0.35 });
+  const eyeGeo = new THREE.SphereGeometry(1, 20, 14), ep = eyeGeo.attributes.position, euv = eyeGeo.attributes.uv;
+  for (let i = 0; i < ep.count; i++) { const z = ep.getZ(i); euv.setXY(i, z > 0 ? ep.getX(i) * 0.5 + 0.5 : 0.02, z > 0 ? ep.getY(i) * 0.5 + 0.5 : 0.02); }
+  const hs = head.getWorldScale(new THREE.Vector3()).x;
+  for (const side of [-1, 1]) {
+    let best = null, bl = -1e9;
+    for (const p of band) { const l = p.clone().sub(hp).dot(lat) * side; if (l > bl) { bl = l; best = p; } }
+    if (!best) continue;
+    const width = bl * 2, r = Math.max(width * 0.17, L * 0.06);
+    const dir = lat.clone().multiplyScalar(side).add(f.clone().multiplyScalar(0.35)).normalize();
+    const centre = best.clone().sub(dir.clone().multiplyScalar(r * 0.45));
+    const eye = new THREE.Group();
+    const ballMesh = new THREE.Mesh(eyeGeo, ball); ballMesh.scale.setScalar(r); eye.add(ballMesh);
+    eye.position.copy(head.worldToLocal(centre.clone()));
+    const look = head.worldToLocal(centre.clone().add(dir));
+    eye.scale.setScalar(1 / hs);
+    // build the orientation explicitly so the slit pupil stays vertical relative to the head
+    const zl = look.clone().sub(eye.position).normalize();
+    const upL = head.worldToLocal(centre.clone().add(up)).sub(head.worldToLocal(centre.clone())).normalize();
+    const xl = new THREE.Vector3().crossVectors(upL, zl).normalize(), yl = new THREE.Vector3().crossVectors(zl, xl);
+    eye.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xl, yl, zl));
+    head.add(eye);
+  }
+}
 function loadGLTF(url) {
   return fetch(url).then((r) => { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); })
     .then((j) => new Promise((res, rej) => new THREE.GLTFLoader().parse(jsonToGlb(j), '', res, rej)));
@@ -1289,6 +1449,7 @@ function makeInstance(gltf, key, pal, height, rootScale, emissiveEyes) {
   const box = new THREE.Box3(), v = new THREE.Vector3();
   m.traverse((o) => { if (o.isBone) box.expandByPoint(o.getWorldPosition(v)); });
   const c = box.getCenter(new THREE.Vector3());
+  try { addEyes(m, emissiveEyes); } catch (e) { /* eyes are optional */ }
   const head = m.getObjectByName('Head'); const hp = head ? head.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 0, 1);
   const dx = hp.x - c.x, dz = hp.z - c.z;
   const pivot = new THREE.Group(); pivot.add(m);
@@ -1411,7 +1572,7 @@ async function loadModels() {
     const [hero, vg] = await Promise.all([heroFor(profile.skin), loadGLTF(DINO_MODELS.trex.url)]);
     dino.mixer = true; useInstance(dino, hero);
     const vi = makeInstance(vg, 'trex', VILLAIN_PAL, 3.3, 1.12, true);
-    useInstance(villain, vi);
+    useInstance(villain, vi); villain.headBone = vi.inner.getObjectByName('Head');
   } catch (e) { console.warn('Rigged models unavailable, using built-in dinos', e); dino.mixer = null; }
   await loadScenery();
   await initWildlife();
@@ -1712,6 +1873,7 @@ function sfx(name, v = 1) {
     case 'click': tone('triangle', 660, 880, t, 0.06, 0.12); break;
     case 'buy': [880, 1320].forEach((f, i) => tone('square', f, f, t + i * 0.07, 0.12, 0.06)); tone('sine', 1760, 1760, t + 0.14, 0.25, 0.12); break;
     case 'award': [523, 784, 1047].forEach((f, i) => tone('triangle', f, f, t + i * 0.09, 0.3, 0.13)); break;
+    case 'crunch': noise(t, 0.35, 0.7, 'lowpass', 900); tone('square', 140, 50, t, 0.2, 0.18); noise(t + 0.12, 0.25, 0.5, 'bandpass', 1500, audio.sfx, 1.5); break;
     case 'stomp': tone('sine', 75, 32, t, 0.3, Math.max(0.0002, 0.55 * v)); noise(t, 0.2, Math.max(0.0002, 0.25 * v), 'lowpass', 250); break;
     case 'trexroar': {
       const ctx = audio.ctx, o = ctx.createOscillator(), o2 = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
@@ -1772,7 +1934,7 @@ let coinMesh; const coins = []; const COIN_MAX = 180;
 const items = [], itemPool = {};
 let curZone = 'jungle', shownZone = '', progT = 0;
 
-function zoneIndexAt(wd) { return (startZone + Math.floor(Math.max(0, wd) / ZONE_LEN)) % 5; }
+function zoneIndexAt(wd) { return (startZone + Math.floor(Math.max(0, wd) / ZONE_LEN)) % ZONES.length; }
 function zoneAt(wd) { return ZONES[zoneIndexAt(wd)]; }
 function lightFor(z) { return z === 'cave' ? LIGHT.cave : nightMode ? LIGHT.night : LIGHT[z]; }
 
@@ -1871,6 +2033,7 @@ function stripRoad(g, zone, len) {
   const geo = new THREE.PlaneGeometry(7.2, len).rotateX(-PI / 2).translate(0, 0, -len / 2);
   const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * len / 24);
   const road = new THREE.Mesh(geo, roadMats[zone]); road.receiveShadow = true; g.add(road);
+  if (zone === 'jungle' || zone === 'horror') return;
   for (const lx of [-1, 1]) for (let z = -1.2; z > -len; z -= 3) g.add(M(G.plane, MAT.laneMark, lx, 0.012, z, 0.11, 1.5, 1, -PI / 2, 0, 0));
   for (const s of [-1, 1]) {
     g.add(M(G.plane, MAT.edgeLine, s * 3.35, 0.012, -len / 2, 0.09, len, 1, -PI / 2, 0, 0));
@@ -2097,7 +2260,7 @@ function resetWorld() {
 }
 
 /* ------------------------------------------------------------ progression: shop, achievements, goals */
-const ROAD_PRICE = [0, 10000, 12500, 15000, 17500, 20000];
+const ROAD_PRICE = [0, 10000, 12500, 15000, 17500, 20000, 15000];
 const UPG = {
   life: { name: 'EXTRA LIFE', desc: 'Start every run with one more heart', max: 2, cost: (l) => [700, 1000][l], icon: 'i-heart' },
   shield: { name: 'PROTECTION', desc: 'Shield lasts 3 s longer per level', max: 5, cost: (l) => 400 + l * 150, icon: 'i-shield' },
@@ -2138,7 +2301,7 @@ const ACH = [
   { id: 'zones', name: 'Explorer', desc: 'Pass through all five areas in one run', r: 500, t: () => run.zones.size >= 5 },
   { id: 'clean', name: 'Untouchable', desc: 'Run 1,000 m without a hit', r: 500, t: () => run.clean >= 1000 },
   { id: 'dinos', name: 'Collector', desc: 'Unlock all five dinos', r: 1500, t: () => profile.owned.skins.length >= SKINS.length, p: () => [profile.owned.skins.length, SKINS.length] },
-  { id: 'roads', name: 'Pathfinder', desc: 'Unlock every road', r: 800, t: () => profile.owned.roads.length >= 6, p: () => [profile.owned.roads.length, 6] }
+  { id: 'roads', name: 'Pathfinder', desc: 'Unlock every road', r: 800, t: () => profile.owned.roads.length >= 7, p: () => [profile.owned.roads.length, 7] }
 ];
 const GOAL_T = {
   coins: { txt: (n) => `Collect ${n} coins in one run`, n: (L) => 60 + L * 30 },
@@ -2242,10 +2405,10 @@ function updateVillain(dt) {
   let z;
   if (chase < 0.45) { const s = clamp((chase - 0.22) / 0.23, 0, 1), e = s * s * (3 - 2 * s); z = lerp(camZ + 4, 5.4, e); }
   else z = lerp(5.4, 1.8, (chase - 0.45) / 0.55);
-  if (caught) z = Math.max(0.9, v.group.position.z - dt * 6);
+  if (caught) z = Math.max(state === 'dying' ? 1.7 : 0.9, v.group.position.z - dt * (state === 'dying' ? 13 : 6));
   v.group.visible = z < camZ - 0.5;
   if (px > 0.5) v.side = -1; else if (px < -0.5) v.side = 1;
-  const tx = px + v.side * (caught ? 0.7 : 2.7);
+  const tx = px + v.side * (caught ? (state === 'dying' ? 0.25 : 0.7) : 2.7);
   v.group.position.x = damp(v.group.position.x, tx, 3.5, dt); v.group.position.z = z;
   if (state !== 'paused') v.phase += dt * Math.max(speed, 7) * 0.48;
   const tgt = caught ? poseChomp(t) : poseRun(v.phase, t, true);
@@ -2273,7 +2436,7 @@ function show(id) { screens.forEach((s) => ($(s).hidden = s !== id)); }
 function setState(s) { prevState = state; state = s; }
 function startRun() {
   initAudio();
-  startZone = profile.zone === 5 ? 0 : profile.zone; nightMode = profile.zone === 5;
+  startZone = profile.zone === 5 ? 0 : profile.zone === 6 ? 5 : profile.zone; nightMode = profile.zone === 5;
   resetWorld();
   setState('playing'); show(null); $('hud').hidden = false;
   menuCamFrom.copy(camera.position); camMode = 'swoop'; camT = 0;
@@ -2286,7 +2449,7 @@ function startRun() {
   if (Bo.life > 0) { lives++; Bo.life--; used.push('BONUS HEART'); }
   if (Bo.shield > 0) { powers.shield = powerMax.shield; Bo.shield--; used.push('START SHIELD'); }
   if (Bo.boost > 0) { powers.boost = powerMax.boost; Bo.boost--; used.push('HEAD START'); }
-  run = newRunStats(); runActive = true; run.zones.add(curZone);
+  run = newRunStats(); runActive = true; run.zones.add(curZone); resetEat();
   chase = 0.62; chasePeak = 0; caught = false; deathBy = 'crash';
   villain.group.position.set(px + 2, 0, camera.position.z + 4); villain.cur = poseRun(0, 0, true);
   if (dino.mixer) { dino.anim = null; dino.mixer.stopAllAction(); playAnim(dino, 'Run', 0); }
@@ -2308,6 +2471,7 @@ function score() { return Math.floor(distance * 5 + coinsRun * 20 + eggsRun * 50
 function pauseGame() { if (state !== 'playing') return; setState('paused'); show('pause'); if (audio.ctx) audio.ctx.suspend(); }
 function resumeGame() { setState('playing'); show(null); $('hud').hidden = false; if (audio.ctx) audio.ctx.resume(); clock.getDelta(); }
 function goMenu() {
+  resetEat();
   setState('menu'); $('hud').hidden = true; show('menu'); camMode = 'menu';
   resetWorld(); refreshMenu();
   if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
@@ -2325,7 +2489,7 @@ function gameOver() {
   profile.goals = profile.goals.map((g, i, a) => g || newGoal(a.filter(Boolean).map((x) => x.k)));
   profile.wallet += goalCoins;
   $('oGoals').innerHTML = goalHtml + (run.newAch.length ? `<div class="note">Achievements unlocked: ${run.newAch.join(', ')}. Claim them in AWARDS.</div>` : '');
-  $('oReason').textContent = deathBy === 'trex' ? 'THE T-REX CAUGHT YOU!' : 'YOU CRASHED!';
+  $('oReason').textContent = deathBy === 'trex' ? 'THE T-REX CAUGHT YOU!' : 'YOU CRASHED... AND THE T-REX ATE YOU!';
   $('oEarned').innerHTML = coinTxt(coinsRun + goalCoins) + ' earned';
   const isBest = sc > profile.best;
   profile.best = Math.max(profile.best, sc); profile.bestDist = Math.max(profile.bestDist, d); profile.wallet += coinsRun;
@@ -2484,8 +2648,22 @@ function updateDying(dt) {
   if (air) { vy -= GRAV * dt; py = Math.max(0, py + vy * dt); if (py === 0) air = false; }
   for (const o of obstacles) o.mesh.position.z = distance - o.wd;
   slowmo = damp(slowmo, 1, 2, dt);
-  if (dieT > 1.6) gameOver();
+  // the T-Rex runs in, grabs the dino in its jaws, shakes it and swallows it
+  if (!caught) { caught = true; chase = 1; }
+  const v = villain, near = v.group.visible && Math.abs(v.group.position.z) < 2.6;
+  if (!eat.grab && (near || dieT > 1.4)) { eat.grab = true; eat.t = 0; sfx('trexroar'); }
+  if (eat.grab) {
+    eat.t += dt;
+    if (!eat.gone && eat.t > 0.9) {
+      eat.gone = true; dino.group.visible = false; sfx('crunch'); shake = 0.9; vibrate([80, 50, 120]);
+      const hp = eat.pos;
+      burst(hp.x, hp.y, hp.z, 0x5a140c, 26, 5, 0.45, 0.8, 9); burst(hp.x, hp.y, hp.z, 0xb89a70, 18, 4, 0.5, 0.7, 6);
+    }
+    if (eat.t > 2.0) gameOver();
+  } else if (dieT > 4) gameOver();
 }
+const eat = { grab: false, gone: false, t: 0, pos: new THREE.Vector3() };
+function resetEat() { eat.grab = false; eat.gone = false; eat.t = 0; if (dino) { dino.group.visible = true; dino.group.scale.setScalar(1); dino.group.rotation.set(0, 0, 0); } }
 function syncWorld() {
   syncLegacy();
   for (const c of chunks) c.position.z = distance - c.userData.wd;
@@ -2523,6 +2701,16 @@ function animateDino(dt) {
   }
   const inGame = state === 'playing' || state === 'paused' || state === 'dying' || state === 'over';
   dino.group.position.set(inGame ? px : 0, inGame ? py : 0, 0);
+  if (eat.grab && state === 'dying') {
+    const hb = villain.headBone;
+    if (hb) {
+      hb.getWorldPosition(eat.pos);
+      const sh = Math.sin(eat.t * 28) * 0.35 * Math.min(1, eat.t * 3);
+      dino.group.position.set(eat.pos.x + sh * 0.4, Math.max(0.2, eat.pos.y - 0.55), eat.pos.z - 0.9);
+      dino.group.rotation.set(-0.9 + sh * 0.3, 0.6 * villain.side, 1.2 + sh);
+      dino.group.scale.setScalar(Math.max(0.55, 1 - eat.t * 0.4));
+    }
+  }
   const lean = inGame ? (LANES[lane] - px) : 0;
   dino.root.rotation.z = damp(dino.root.rotation.z, -lean * 0.12, 10, dt);
   dino.root.rotation.y = damp(dino.root.rotation.y, inGame ? -lean * 0.18 : 0, state === 'charSel' ? 3 : 10, dt);
@@ -2549,7 +2737,8 @@ function updateCamera(dt) {
     lookCur.lerp(camLook, 1 - Math.exp(-4 * dt));
   } else {
     chaseView = damp(chaseView, state === 'playing' || state === 'dying' ? chase : 0, 2, dt);
-    const chaseCam = camTarget.set(px * 0.42, 3.9 + py * 0.4 + chaseView * 1.3, 7.4 + chaseView * 1.4);
+    const eatCam = state === 'dying' ? 1 : 0;
+    const chaseCam = camTarget.set(px * 0.42 + eatCam * 1.6, 3.9 + py * 0.4 + chaseView * 1.3 + eatCam * 1.8, 7.4 + chaseView * 1.4 + eatCam * 2.6);
     camLook.set(px * 0.6, 1.15 + py * 0.3, -9);
     if (camMode === 'swoop') {
       camT = Math.min(1, camT + dt / 1.1); const e = camT * camT * (3 - 2 * camT);
@@ -2659,7 +2848,7 @@ function renderChar() {
   $('cLock').hidden = owned;
   setSkin(selIdx);
 }
-const JOURNEYS = [{ name: 'JUNGLE PATH' }, { name: 'WATERFALL' }, { name: 'ANCIENT RUINS' }, { name: 'WOODEN BRIDGE' }, { name: 'CAVE SECTION' }, { name: 'NIGHT MODE' }];
+const JOURNEYS = [{ name: 'JUNGLE PATH' }, { name: 'WATERFALL' }, { name: 'ANCIENT RUINS' }, { name: 'WOODEN BRIDGE' }, { name: 'CAVE SECTION' }, { name: 'NIGHT MODE' }, { name: 'HAUNTED JUNGLE' }];
 let thumbs = [];
 function renderCards() {
   const wrap = $('cards'); wrap.innerHTML = '';
@@ -2745,7 +2934,7 @@ function makeThumbs() {
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setPixelRatio(1); renderer.setSize(240, 320, false); camera.aspect = 240 / 320; camera.fov = 62; camera.updateProjectionMatrix();
   dino.group.visible = false;
-  const order = [0, 1, 2, 3, 4, 0];
+  const order = [0, 1, 2, 3, 4, 0, 5];
   order.forEach((zi, i) => {
     startZone = zi; nightMode = i === 5; resetWorld();
     // sprinkle a few obstacles and coins so the card looks like a real run
@@ -2777,7 +2966,7 @@ async function boot() {
     coinMesh.castShadow = true; coinMesh.frustumCulled = false; scene.add(coinMesh);
     for (let i = 0; i < COIN_MAX; i++) coins.push({ active: false, x: 0, y: 0, wd: 0, ph: 0 });
     progress(0.38, 'Building the trails'); await nextFrame();
-    const plan = [['jungle', 10], ['waterfall', 4], ['ruins', 4], ['bridge', 4], ['cave', 4]];
+    const plan = [['jungle', 10], ['waterfall', 4], ['ruins', 4], ['bridge', 4], ['cave', 4], ['horror', 4]];
     const total = plan.reduce((a, b) => a + b[1], 0); let done = 0;
     for (const [z, n] of plan) {
       const p = pools[z] = pools[z] || [];
@@ -2789,7 +2978,7 @@ async function boot() {
     progress(0.88, 'Lighting torches'); await nextFrame();
     resize(); applyQuality();
     makeThumbs();
-    startZone = profile.zone === 5 ? 0 : profile.zone; nightMode = profile.zone === 5;
+    startZone = profile.zone === 5 ? 0 : profile.zone === 6 ? 5 : profile.zone; nightMode = profile.zone === 5;
     resetWorld();
     renderer.compile(scene, camera);
     camera.position.set(3, 2.3, -5); camBase.copy(camera.position); lookCur.set(0, 1.5, 0);

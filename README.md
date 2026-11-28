@@ -34,4 +34,4 @@ Then open http://localhost:8000.
 - `www/index.html` — UI and styles
 - `www/game.js` — the game
 - `www/vendor/three.min.js` — Three.js r149, `www/vendor/GLTFLoader.js` — its glTF loader
-- `www/models/` — rigged Velociraptor by Quaternius (public domain), see `CREDITS.md`
+- `www/models/` — rigged dinosaurs (Quaternius, public domain), trees (ez-tree) and props, see `CREDITS.md`
