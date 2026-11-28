@@ -492,7 +492,7 @@ SKINS[0].model = 'raptor'; SKINS[0].pal = { body: 0x5b8a2e, dark: 0x22341a, bell
 SKINS[1].model = 'raptor'; SKINS[1].pal = { body: 0x9a5426, dark: 0x2c170a, belly: 0xe2b27c, eye: 0xffc030 };
 SKINS[2].model = 'raptor'; SKINS[2].pal = { body: 0xd6d6ce, dark: 0x5e605c, belly: 0xf4efe2, eye: 0x58c8ff };
 SKINS.push(
-  { ...SKINS[0], name: 'TRIKE', desc: 'A three-horned tank. Slow, but shields and boosts last ages.', stats: [2, 2, 5], model: 'trike', pal: { body: 0x6e7a3e, dark: 0x8a3a1e, belly: 0xd2c08e } },
+  { ...SKINS[0], name: 'TRIKE', desc: 'A three-horned tank. Slow, but shields and boosts last ages.', stats: [2, 2, 5], model: 'trike', pal: { body: 0x8a4a22, dark: 0x5e6e34, belly: 0xd8c8a0 } },
   { ...SKINS[0], name: 'REX', desc: 'A young T-Rex. The fastest runner in the jungle.', stats: [5, 2, 3], model: 'trex', pal: { body: 0x3f6a2a, dark: 0x22361a, belly: 0xd8c48e, eye: 0xffb020, claw: 0x1a140e, mouth: 0x8a1c1c } }
 );
 const VILLAIN = { base: '#3b342c', dorsal: '#1a1512', dark: 'rgba(18,14,10,.55)', light: 'rgba(130,110,85,.22)', belly: '#a39074', stripe: 'rgba(105,24,16,.8)', spine: '#4a140c', spike: 0x2a211b, claw: 0x0e0b09, eye: 0xff3214 };
@@ -1183,7 +1183,30 @@ const DINO_MODELS = {
   trike: { url: 'models/triceratops.json', roles: { Brown: 'body', Purple: 'dark', LightBrown: 'belly' }, h: 1.9 }
 };
 const VILLAIN_PAL = { body: 0x34291f, dark: 0x6b1a10, belly: 0x8a6e52, eye: 0xff2a10, claw: 0x0b0908, mouth: 0x8a0c0c };
-function loadGLTF(url) { return new Promise((res, rej) => new THREE.GLTFLoader().load(url, res, undefined, rej)); }
+// Models ship as glTF JSON with base64 buffers. Some hosts (the web preview) block fetching data: URLs,
+// so decode the buffer here and hand the loader an in-memory GLB instead.
+function jsonToGlb(j) {
+  const enc = new TextEncoder();
+  let bin = new Uint8Array(0);
+  if (j.buffers && j.buffers[0] && /^data:/.test(j.buffers[0].uri || '')) {
+    const b64 = j.buffers[0].uri.split(',')[1], raw = atob(b64); bin = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bin[i] = raw.charCodeAt(i);
+    j.buffers[0] = { byteLength: bin.length };
+  }
+  let jsonBytes = enc.encode(JSON.stringify(j));
+  const jPad = (4 - (jsonBytes.length % 4)) % 4, bPad = (4 - (bin.length % 4)) % 4;
+  const total = 12 + 8 + jsonBytes.length + jPad + (bin.length ? 8 + bin.length + bPad : 0);
+  const out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out);
+  dv.setUint32(0, 0x46546c67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
+  dv.setUint32(12, jsonBytes.length + jPad, true); dv.setUint32(16, 0x4e4f534a, true);
+  u8.set(jsonBytes, 20); u8.fill(0x20, 20 + jsonBytes.length, 20 + jsonBytes.length + jPad);
+  if (bin.length) { const o = 20 + jsonBytes.length + jPad; dv.setUint32(o, bin.length + bPad, true); dv.setUint32(o + 4, 0x004e4942, true); u8.set(bin, o + 8); }
+  return out;
+}
+function loadGLTF(url) {
+  return fetch(url).then((r) => { if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); })
+    .then((j) => new Promise((res, rej) => new THREE.GLTFLoader().parse(jsonToGlb(j), '', res, rej)));
+}
 const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
 function makeInstance(gltf, key, pal, height, rootScale, emissiveEyes) {
   const spec = DINO_MODELS[key], m = gltf.scene;
@@ -1193,12 +1216,15 @@ function makeInstance(gltf, key, pal, height, rootScale, emissiveEyes) {
   m.traverse((o) => { if (o.isMesh) { o.material = mats[spec.roles[o.material.name] || 'body']; o.castShadow = true; o.frustumCulled = false; } });
   // face -z and stand on the ground at the wanted height, whatever the source orientation was
   m.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(m), c = box.getCenter(new THREE.Vector3());
+  // measure the skeleton: glTF ignores a skinned mesh's own node transform, so mesh bounds can be off by 100x
+  const box = new THREE.Box3(), v = new THREE.Vector3();
+  m.traverse((o) => { if (o.isBone) box.expandByPoint(o.getWorldPosition(v)); });
+  const c = box.getCenter(new THREE.Vector3());
   const head = m.getObjectByName('Head'); const hp = head ? head.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 0, 1);
   const dx = hp.x - c.x, dz = hp.z - c.z;
   const pivot = new THREE.Group(); pivot.add(m);
   pivot.rotation.y = PI - Math.atan2(dx, dz);
-  const s = height / ((box.max.y - box.min.y) * rootScale);
+  const s = height / ((box.max.y - box.min.y) * 1.08 * rootScale);   // bones sit ~8% inside the skin
   pivot.scale.setScalar(s);
   m.position.set(-c.x, -box.min.y, -c.z);
   const inst = { model: pivot, inner: m, mats, mixer: new THREE.AnimationMixer(m), actions: {}, anim: null, key, baseScale: s };
