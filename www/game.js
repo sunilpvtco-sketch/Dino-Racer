@@ -488,7 +488,8 @@ const SKINS = [
   { name: 'RUSTY', desc: 'The fastest legs in the valley, but a shorter hop.', stats: [4, 2, 3], base: '#9a6a3c', dorsal: '#5a3518', dark: 'rgba(70,38,14,.45)', light: 'rgba(210,160,100,.25)', belly: '#ead0a4', stripe: 'rgba(120,40,18,.75)', spine: '#b84a1c', spike: 0xc2501e, claw: 0x20120c, eye: 0xe0a428 },
   { name: 'FROST', desc: 'Light as snow. Jumps highest, power-ups last longer.', stats: [2, 4, 4], base: '#c9cbc2', dorsal: '#8c8e88', dark: 'rgba(95,95,92,.4)', light: 'rgba(255,255,250,.35)', belly: '#f3eee0', stripe: 'rgba(90,92,92,.6)', spine: '#a85a36', spike: 0xb86a44, claw: 0x262626, eye: 0x7ec8e8 }
 ];
-SKINS[0].model = 'raptor'; SKINS[0].pal = { body: 0x5b8a2e, dark: 0x22341a, belly: 0xd8c08a, eye: 0xffb020 };
+SKINS[0].model = 'reptile'; SKINS[0].pal = { tint: 0xffffff, eye: 0xffb020 };
+SKINS[0].desc = 'Brave and balanced. A real jungle reptile with a scaly hide.';
 SKINS[1].model = 'raptor'; SKINS[1].pal = { body: 0x9a5426, dark: 0x2c170a, belly: 0xe2b27c, eye: 0xffc030 };
 SKINS[2].model = 'raptor'; SKINS[2].pal = { body: 0xd6d6ce, dark: 0x5e605c, belly: 0xf4efe2, eye: 0x58c8ff };
 SKINS.push(
@@ -1178,6 +1179,7 @@ function setSkin(i) {
 /* ------------------------------------------------------------ rigged glTF dinosaurs (Quaternius, public domain) */
 // per model: file, which material plays which role, and the height we want in metres
 const DINO_MODELS = {
+  reptile: { url: 'models/reptile.json', keep: true, h: 1.75 },
   raptor: { url: 'models/velociraptor.json', roles: { Brown: 'body', Black: 'dark', LightBrown: 'belly', Eyes: 'eye' }, h: 1.9 },
   trex: { url: 'models/trex.json', roles: { Green: 'body', LightGreen: 'dark', LightYellow: 'belly', Black: 'claw', Red: 'mouth' }, h: 2.5 },
   trike: { url: 'models/triceratops.json', roles: { Brown: 'body', Purple: 'dark', LightBrown: 'belly' }, h: 1.9 }
@@ -1212,8 +1214,11 @@ function makeInstance(gltf, key, pal, height, rootScale, emissiveEyes) {
   const spec = DINO_MODELS[key], m = gltf.scene;
   const mk2 = (c, r = 0.62) => { const x = new THREE.MeshStandardMaterial({ color: lin(c), roughness: r, metalness: 0 }); x.envMapIntensity = 0.35; return x; };
   const mats = { body: mk2(pal.body), dark: mk2(pal.dark, 0.55), belly: mk2(pal.belly, 0.7), eye: mk2(pal.eye, 0.15), claw: mk2(pal.claw || 0x151210, 0.35), mouth: mk2(pal.mouth || 0x7a1a1a, 0.4) };
-  mats.eye.emissive = lin(pal.eye); mats.eye.emissiveIntensity = emissiveEyes ? 1.2 : 0.3;
-  m.traverse((o) => { if (o.isMesh) { o.material = mats[spec.roles[o.material.name] || 'body']; o.castShadow = true; o.frustumCulled = false; } });
+  mats.eye.emissive = lin(pal.eye || 0x222222); mats.eye.emissiveIntensity = emissiveEyes ? 1.2 : 0.3;
+  if (spec.keep) {
+    // textured, realistic model: keep its own painted skin, just tune the material
+    m.traverse((o) => { if (o.isMesh) { o.material.envMapIntensity = 0.45; o.material.roughness = 0.68; mats.body = o.material; o.castShadow = true; o.frustumCulled = false; } });
+  } else m.traverse((o) => { if (o.isMesh) { o.material = mats[spec.roles[o.material.name] || 'body']; o.castShadow = true; o.frustumCulled = false; } });
   // face -z and stand on the ground at the wanted height, whatever the source orientation was
   m.updateMatrixWorld(true);
   // measure the skeleton: glTF ignores a skinned mesh's own node transform, so mesh bounds can be off by 100x
@@ -1227,7 +1232,7 @@ function makeInstance(gltf, key, pal, height, rootScale, emissiveEyes) {
   const s = height / ((box.max.y - box.min.y) * 1.08 * rootScale);   // bones sit ~8% inside the skin
   pivot.scale.setScalar(s);
   m.position.set(-c.x, -box.min.y, -c.z);
-  const inst = { model: pivot, inner: m, mats, mixer: new THREE.AnimationMixer(m), actions: {}, anim: null, key, baseScale: s };
+  const inst = { model: pivot, inner: m, mats, mixer: new THREE.AnimationMixer(m), actions: {}, anim: null, key, baseScale: s, keep: !!spec.keep };
   for (const clip of gltf.animations) inst.actions[clip.name.replace(/^.*[_|]/, '')] = inst.mixer.clipAction(clip);
   for (const k of ['Jump', 'Death', 'Attack']) if (inst.actions[k]) { inst.actions[k].setLoop(THREE.LoopOnce, 1); inst.actions[k].clampWhenFinished = true; }
   return inst;
@@ -1251,6 +1256,7 @@ const GLTF_CACHE = {};
 const heroInst = {};
 function paintInstance(inst, pal) {
   const m = inst.mats;
+  if (inst.keep) { m.body.color.setHex(pal.tint || 0xffffff); return; }
   for (const k of ['body', 'dark', 'belly', 'eye', 'claw', 'mouth']) if (pal[k] !== undefined) m[k].color.copy(lin(pal[k]));
   m.eye.emissive.copy(lin(pal.eye));
 }
@@ -1332,7 +1338,7 @@ async function loadModels() {
     const sk = SKINS[profile.skin];
     const [hero, vg] = await Promise.all([heroFor(profile.skin), loadGLTF(DINO_MODELS.trex.url)]);
     dino.mixer = true; useInstance(dino, hero);
-    const vi = makeInstance(vg, 'trex', VILLAIN_PAL, 3.9, 1.12, true);
+    const vi = makeInstance(vg, 'trex', VILLAIN_PAL, 3.3, 1.12, true);
     useInstance(villain, vi);
   } catch (e) { console.warn('Rigged models unavailable, using built-in dinos', e); dino.mixer = null; }
   await loadScenery();
@@ -2162,12 +2168,12 @@ function updateVillain(dt) {
   if (!inGame) { v.group.visible = false; return; }
   const camZ = camera.position.z;
   let z;
-  if (chase < 0.45) { const s = clamp((chase - 0.22) / 0.23, 0, 1), e = s * s * (3 - 2 * s); z = lerp(camZ + 4, 4.0, e); }
-  else z = lerp(4.0, 1.4, (chase - 0.45) / 0.55);
+  if (chase < 0.45) { const s = clamp((chase - 0.22) / 0.23, 0, 1), e = s * s * (3 - 2 * s); z = lerp(camZ + 4, 5.4, e); }
+  else z = lerp(5.4, 1.8, (chase - 0.45) / 0.55);
   if (caught) z = Math.max(0.9, v.group.position.z - dt * 6);
   v.group.visible = z < camZ - 0.5;
   if (px > 0.5) v.side = -1; else if (px < -0.5) v.side = 1;
-  const tx = px + v.side * (caught ? 0.7 : 2.2);
+  const tx = px + v.side * (caught ? 0.7 : 2.7);
   v.group.position.x = damp(v.group.position.x, tx, 3.5, dt); v.group.position.z = z;
   if (state !== 'paused') v.phase += dt * Math.max(speed, 7) * 0.48;
   const tgt = caught ? poseChomp(t) : poseRun(v.phase, t, true);
